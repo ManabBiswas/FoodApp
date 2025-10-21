@@ -1,12 +1,16 @@
 import { Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Index() {
   return (
-     <View className="flex-1 items-center bg-white">
-      <Text className="text-xl font-bold text-blue-500">
-        Welcome to React Native with Nativewind!
-      </Text>
-      <Text className="text-lg">It will ba a food app with expo router</Text>
-    </View>
+    <SafeAreaView>
+      <View className="flex-1 bg-white px-4">
+        <Text className="text-2xl font-bold text-primary font-quicksand-bold">
+          Welcome to React Native with Nativewind!
+        </Text>
+        <Text className="text-lg font-quicksand-light text-tertiary">It will be a food app with expo router</Text>
+      </View>
+    </SafeAreaView>
+
   );
 }
