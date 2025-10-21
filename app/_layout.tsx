@@ -1,8 +1,32 @@
-import { Stack } from "expo-router";
+import { SplashScreen, Stack } from "expo-router";
 import "./globals.css";
-import {useFonts} from "expo-font";
-import {useEffect} from "react";
+import { useFonts } from "expo-font";
+import { useEffect } from "react";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 
 export default function RootLayout() {
-  return <Stack screenOptions={{headerShown: false}} />;
+  const [fontsLoaded, error] = useFonts({
+    "QuickSand-Bold": require("../assets/fonts/Quicksand-Bold.ttf"),
+    "QuickSand-Medium": require("../assets/fonts/Quicksand-Medium.ttf"),
+    "QuickSand-Regular": require("../assets/fonts/Quicksand-Regular.ttf"),
+    "QuickSand-SemiBold": require("../assets/fonts/Quicksand-SemiBold.ttf"),
+    "QuickSand-Light": require("../assets/fonts/Quicksand-Light.ttf"),
+  });
+
+  useEffect(() => {
+    if (error) throw error;
+    if (fontsLoaded) SplashScreen.hideAsync();
+  }, [fontsLoaded, error]);
+
+  if (!fontsLoaded) return null;
+
+  return (
+    <SafeAreaProvider>
+      <SafeAreaView style={{ flex: 1 }}>
+        <StatusBar style="dark" translucent />
+        <Stack screenOptions={{ headerShown: false }} />
+      </SafeAreaView>
+    </SafeAreaProvider>
+  );
 }
