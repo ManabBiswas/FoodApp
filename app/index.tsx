@@ -2,6 +2,7 @@ import { FlatList, Pressable, Text, View, Image, TouchableOpacity } from "react-
 import { SafeAreaView } from "react-native-safe-area-context";
 import { images, offers } from "@/constants"
 import { Fragment } from "react";
+import CartButton from "@/components/CartButton";
 
 export default function Index() {
   const isEven = (num: number) => num % 2 === 0;
@@ -21,8 +22,8 @@ export default function Index() {
 
             </View>
             <View className="flex-end">
-              {/* <Image source={images.bell} className="size-24" resizeMode="contain" /> */}
-              <Text className="h3-regular text-gray-600">cart</Text>
+              <CartButton />
+              {/* <Text className="h3-regular text-gray-600">cart</Text> */}
             </View>
           </View>
         }

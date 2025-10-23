@@ -2,6 +2,7 @@ import arrowBack from "@/assets/icons/arrow-back.png";
 import arrowDown from "@/assets/icons/arrow-down.png";
 import arrowRight from "@/assets/icons/arrow-right.png";
 import bag from "@/assets/icons/bag.png";
+import cart from "@/assets/icons/cart.png";
 import check from "@/assets/icons/check.png";
 import clock from "@/assets/icons/clock.png";
 import dollar from "@/assets/icons/dollar.png";
@@ -183,6 +184,7 @@ export const images = {
     arrowDown,
     arrowRight,
     bag,
+    cart,
     check,
     clock,
     dollar,
