@@ -23,7 +23,7 @@ export default function Index() {
             </View>
             <View className="flex-end">
               <CartButton />
-              {/* <Text className="h3-regular text-gray-600">cart</Text> */}
+              <Text className="h3-regular text-gray-600">cart</Text>
             </View>
           </View>
         }
@@ -44,7 +44,7 @@ export default function Index() {
             </Pressable>
           </View>
         )}
-        contentContainerClassName="pb-14 py-4 px-2"
+        contentContainerClassName="pb-14 pt-2 px-2"
       />
     </SafeAreaView>
   );
