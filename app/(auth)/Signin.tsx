@@ -34,7 +34,7 @@ const Signin = () => {
             <Text className="text-sm text-gray-700 mb-2" style={{ fontFamily: 'Quicksand-Medium' }}>
               Email
             </Text>
-            <View className="flex-row items-center bg-gray-50 rounded-xl px-4 py-3">
+            <View className="flex-row items-center bg-gray-50 rounded-3xl px-4 py-3">
               <Image source={images.envelope} className="size-5 mr-3" resizeMode="contain" tintColor="#9CA3AF" />
               <TextInput
                 className="flex-1 text-base text-gray-900"
@@ -55,7 +55,7 @@ const Signin = () => {
             <Text className="text-sm text-gray-700 mb-2" style={{ fontFamily: 'Quicksand-Medium' }}>
               Password
             </Text>
-            <View className="flex-row items-center bg-gray-50 rounded-xl px-4 py-3">
+            <View className="flex-row items-center bg-gray-50 rounded-3xl px-4 py-3">
               <Image source={images.user} className="size-5 mr-3" resizeMode="contain" tintColor="#9CA3AF" />
               <TextInput
                 className="flex-1 text-base text-gray-900"
@@ -85,7 +85,7 @@ const Signin = () => {
 
           {/* Sign In Button */}
           <TouchableOpacity
-            className="bg-red-500 rounded-xl py-4 mt-4"
+            className="bg-red-500 rounded-3xl py-4 mt-4"
             onPress={handleSignIn}
             activeOpacity={0.8}
           >
