@@ -1,7 +1,8 @@
+import CustomInput from '@/components/CustomInput'
 import { images } from '@/constants'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
-import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native'
 
 const Signup = () => {
   const [name, setName] = useState('')
@@ -9,158 +10,168 @@ const Signup = () => {
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [errors, setErrors] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: ''
+  })
+
+  const validateForm = () => {
+    let isValid = true
+    const newErrors = {
+      name: '',
+      email: '',
+      phone: '',
+      password: '',
+      confirmPassword: ''
+    }
+
+    if (!name.trim()) {
+      newErrors.name = 'Name is required'
+      isValid = false
+    }
+
+    if (!email.trim()) {
+      newErrors.email = 'Email is required'
+      isValid = false
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Please enter a valid email'
+      isValid = false
+    }
+
+    if (!phone.trim()) {
+      newErrors.phone = 'Phone number is required'
+      isValid = false
+    } else if (phone.length < 10) {
+      newErrors.phone = 'Please enter a valid phone number'
+      isValid = false
+    }
+
+    if (!password) {
+      newErrors.password = 'Password is required'
+      isValid = false
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters'
+      isValid = false
+    }
+
+    if (!confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password'
+      isValid = false
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match'
+      isValid = false
+    }
+
+    setErrors(newErrors)
+    return isValid
+  }
 
   const handleSignUp = () => {
-    // Add your sign-up logic here
-    if (password !== confirmPassword) {
-      alert('Passwords do not match!')
-      return
+    if (validateForm()) {
+      console.log('Sign up with:', { name, email, phone, password })
+      router.replace('/(auth)/Signin')
     }
-    console.log('Sign up with:', { name, email, phone, password })
-    // For now, navigate to sign in
-    router.replace('/(auth)/Signin')
   }
 
   return (
-    <ScrollView className="flex-1 px-6 pt-24" showsVerticalScrollIndicator={false}>
-      <View className="mb-8">
-        <Text className="text-3xl font-bold text-gray-900 mb-2" style={{ fontFamily: 'Quicksand-Bold' }}>
-          Create Account
+    <ScrollView className="flex-1 px-6 pt-20 pb-8" showsVerticalScrollIndicator={false}>
+      <View className="mb-10">
+        <Text className="text-4xl font-bold text-primary mb-3 font-quicksand-bold" >
+          Create Account 🎉
         </Text>
-        <Text className="text-base text-gray-600" style={{ fontFamily: 'Quicksand-Regular' }}>
-          Sign up to get started
+        <Text className="text-lg text-gray-600 font-quicksand-regular">
+          Sign up to start ordering
         </Text>
       </View>
 
-      <View className="space-y-4 pb-8">
-        {/* Name Input */}
-        <View>
-          <Text className="text-sm text-gray-700 mb-2" style={{ fontFamily: 'Quicksand-Medium' }}>
-            Full Name
-          </Text>
-          <View className="flex-row items-center bg-gray-300 rounded-full px-4 py-3">
-            <Image source={images.person} className="size-5 mr-3" resizeMode="contain" tintColor="#9CA3AF" />
-            <TextInput
-              className="flex-1 text-base text-gray-900"
-              style={{ fontFamily: 'Quicksand-Regular' }}
-              placeholder="Enter your name"
-              placeholderTextColor="#9CA3AF"
-              value={name}
-              onChangeText={setName}
-              autoCapitalize="words"
-              autoComplete="name"
-            />
-          </View>
-        </View>
+      <View>
+        <CustomInput
+          label="Full Name"
+          icon={images.person}
+          placeholder="Enter your full name"
+          value={name}
+          onChangeText={(text) => {
+            setName(text)
+            setErrors({ ...errors, name: '' })
+          }}
+          autoCapitalize="words"
+          autoComplete="name"
+          error={errors.name}
+        />
 
-        {/* Email Input */}
-        <View>
-          <Text className="text-sm text-gray-700 mb-2" style={{ fontFamily: 'Quicksand-Medium' }}>
-            Email
-          </Text>
-          <View className="flex-row items-center bg-gray-300 rounded-full px-4 py-3">
-            <Image source={images.envelope} className="size-5 mr-3" resizeMode="contain" tintColor="#9CA3AF" />
-            <TextInput
-              className="flex-1 text-base text-gray-900"
-              style={{ fontFamily: 'Quicksand-Regular' }}
-              placeholder="Enter your email"
-              placeholderTextColor="#9CA3AF"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-            />
-          </View>
-        </View>
+        <CustomInput
+          label="Email Address"
+          icon={images.envelope}
+          placeholder="Enter your email"
+          value={email}
+          onChangeText={(text) => {
+            setEmail(text)
+            setErrors({ ...errors, email: '' })
+          }}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+          error={errors.email}
+        />
 
-        {/* Phone Input */}
-        <View>
-          <Text className="text-sm text-gray-700 mb-2" style={{ fontFamily: 'Quicksand-Medium' }}>
-            Phone Number
-          </Text>
-          <View className="flex-row items-center bg-gray-300 rounded-full px-4 py-3">
-            <Image source={images.phone} className="size-5 mr-3" resizeMode="contain" tintColor="#9CA3AF" />
-            <TextInput
-              className="flex-1 text-base text-gray-900"
-              style={{ fontFamily: 'Quicksand-Regular' }}
-              placeholder="Enter your phone number"
-              placeholderTextColor="#9CA3AF"
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-              autoComplete="tel"
-            />
-          </View>
-        </View>
+        <CustomInput
+          label="Phone Number"
+          icon={images.phone}
+          placeholder="Enter your phone number"
+          value={phone}
+          onChangeText={(text) => {
+            setPhone(text)
+            setErrors({ ...errors, phone: '' })
+          }}
+          keyboardType="phone-pad"
+          autoComplete="tel"
+          error={errors.phone}
+        />
 
-        {/* Password Input */}
-        <View>
-          <Text className="text-sm text-gray-700 mb-2" style={{ fontFamily: 'Quicksand-Medium' }}>
-            Password
-          </Text>
-          <View className="flex-row items-center bg-gray-300 rounded-full px-4 py-3">
-            <Image source={images.user} className="size-5 mr-3" resizeMode="contain" tintColor="#9CA3AF" />
-            <TextInput
-              className="flex-1 text-base text-gray-900"
-              style={{ fontFamily: 'Quicksand-Regular' }}
-              placeholder="Create a password"
-              placeholderTextColor="#9CA3AF"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-              autoComplete="password"
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Text className="text-sm text-gray-600" style={{ fontFamily: 'Quicksand-Medium' }}>
-                {showPassword ? 'Hide' : 'Show'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        <CustomInput
+          label="Password"
+          icon={images.user}
+          placeholder="Create a password"
+          value={password}
+          onChangeText={(text) => {
+            setPassword(text)
+            setErrors({ ...errors, password: '' })
+          }}
+          autoCapitalize="none"
+          autoComplete="password"
+          isPassword
+          error={errors.password}
+        />
 
-        {/* Confirm Password Input */}
-        <View>
-          <Text className="text-sm text-gray-700 mb-2" style={{ fontFamily: 'Quicksand-Medium' }}>
-            Confirm Password
-          </Text>
-          <View className="flex-row items-center bg-gray-300 rounded-full px-4 py-3">
-            <Image source={images.user} className="size-5 mr-3" resizeMode="contain" tintColor="#9CA3AF" />
-            <TextInput
-              className="flex-1 text-base text-gray-900"
-              style={{ fontFamily: 'Quicksand-Regular' }}
-              placeholder="Confirm your password"
-              placeholderTextColor="#9CA3AF"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry={!showConfirmPassword}
-              autoCapitalize="none"
-              autoComplete="password"
-            />
-            <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-              <Text className="text-sm text-gray-600" style={{ fontFamily: 'Quicksand-Medium' }}>
-                {showConfirmPassword ? 'Hide' : 'Show'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        <CustomInput
+          label="Confirm Password"
+          icon={images.user}
+          placeholder="Confirm your password"
+          value={confirmPassword}
+          onChangeText={(text) => {
+            setConfirmPassword(text)
+            setErrors({ ...errors, confirmPassword: '' })
+          }}
+          autoCapitalize="none"
+          autoComplete="password"
+          isPassword
+          error={errors.confirmPassword}
+        />
 
-        {/* Sign Up Button */}
         <TouchableOpacity
-          className="bg-red-500 rounded-xl py-4 mt-4"
+          className="bg-red-500 rounded-2xl py-4 mt-2 shadow-lg shadow-red-500/50"
           onPress={handleSignUp}
           activeOpacity={0.8}
         >
           <Text className="text-white text-center text-lg font-semibold" style={{ fontFamily: 'Quicksand-Bold' }}>
-            Sign Up
+            Create Account
           </Text>
         </TouchableOpacity>
 
-        {/* Sign In Link */}
-        <View className="flex-row justify-center items-center mt-6">
+        <View className="flex-row justify-center items-center mt-8">
           <Text className="text-gray-600 text-base" style={{ fontFamily: 'Quicksand-Regular' }}>
             Already have an account?{' '}
           </Text>

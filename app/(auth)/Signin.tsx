@@ -1,91 +1,96 @@
+import CustomInput from '@/components/CustomInput'
 import { images } from '@/constants'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
-import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native'
 
 const Signin = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
+  const [errors, setErrors] = useState({ email: '', password: '' })
+
+  const validateForm = () => {
+    let isValid = true
+    const newErrors = { email: '', password: '' }
+
+    if (!email.trim()) {
+      newErrors.email = 'Email is required'
+      isValid = false
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Please enter a valid email'
+      isValid = false
+    }
+
+    if (!password) {
+      newErrors.password = 'Password is required'
+      isValid = false
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters'
+      isValid = false
+    }
+
+    setErrors(newErrors)
+    return isValid
+  }
 
   const handleSignIn = () => {
-    // Add your sign-in logic here
-    console.log('Sign in with:', email, password)
-    // For now, navigate to home
-    router.replace('/(tabs)/Index')
+    if (validateForm()) {
+      console.log('Sign in with:', email, password)
+      router.replace('/(tabs)/Index')
+    }
   }
 
   return (
     <ScrollView className="bg-white h-full" keyboardShouldPersistTaps="handled">
-
-      <View className="flex-1 px-6 pt-24 pb-6">
-        <View className="mb-8">
-          <Text className="text-3xl font-bold text-gray-900 mb-2" style={{ fontFamily: 'Quicksand-Bold' }}>
-            Welcome Back!
+      <View className="flex-1 px-6 pt-20 pb-6">
+        <View className="mb-10">
+          <Text className="text-4xl font-bold text-primary mb-3 font-quicksand-bold" >
+            Welcome Back! 👋
           </Text>
-          <Text className="text-base text-gray-600" style={{ fontFamily: 'Quicksand-Regular' }}>
-            Sign in to continue
+          <Text className="text-lg text-gray-600 font-quicksand-medium" >
+            Sign in to continue your delicious journey
           </Text>
         </View>
 
-        <View className="space-y-4">
-          {/* Email Input */}
-          <View>
-            <Text className="text-sm text-gray-700 mb-2" style={{ fontFamily: 'Quicksand-Medium' }}>
-              Email
-            </Text>
-            <View className="flex-row items-center bg-gray-50 rounded-3xl px-4 py-3">
-              <Image source={images.envelope} className="size-5 mr-3" resizeMode="contain" tintColor="#9CA3AF" />
-              <TextInput
-                className="flex-1 text-base text-gray-900"
-                style={{ fontFamily: 'Quicksand-Regular' }}
-                placeholder="Enter your email"
-                placeholderTextColor="#9CA3AF"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-              />
-            </View>
-          </View>
+        <View>
+          <CustomInput
+            label="Email Address"
+            icon={images.envelope}
+            placeholder="Enter your email"
+            value={email}
+            onChangeText={(text) => {
+              setEmail(text)
+              setErrors({ ...errors, email: '' })
+            }}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            error={errors.email}
+          />
 
-          {/* Password Input */}
-          <View>
-            <Text className="text-sm text-gray-700 mb-2" style={{ fontFamily: 'Quicksand-Medium' }}>
-              Password
-            </Text>
-            <View className="flex-row items-center bg-gray-50 rounded-3xl px-4 py-3">
-              <Image source={images.user} className="size-5 mr-3" resizeMode="contain" tintColor="#9CA3AF" />
-              <TextInput
-                className="flex-1 text-base text-gray-900"
-                style={{ fontFamily: 'Quicksand-Regular' }}
-                placeholder="Enter your password"
-                placeholderTextColor="#9CA3AF"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoComplete="password"
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                <Text className="text-sm text-gray-600" style={{ fontFamily: 'Quicksand-Medium' }}>
-                  {showPassword ? 'Hide' : 'Show'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          <CustomInput
+            label="Password"
+            icon={images.user}
+            placeholder="Enter your password"
+            value={password}
+            onChangeText={(text) => {
+              setPassword(text)
+              setErrors({ ...errors, password: '' })
+            }}
+            autoCapitalize="none"
+            autoComplete="password"
+            isPassword
+            error={errors.password}
+          />
 
-          {/* Forgot Password */}
-          <TouchableOpacity className="self-end">
-            <Text className="text-sm text-red-500" style={{ fontFamily: 'Quicksand-Medium' }}>
+          <TouchableOpacity className="self-end -mt-2 mb-6">
+            <Text className="text-sm text-red-500" style={{ fontFamily: 'Quicksand-SemiBold' }}>
               Forgot Password?
             </Text>
           </TouchableOpacity>
 
-          {/* Sign In Button */}
           <TouchableOpacity
-            className="bg-red-500 rounded-3xl py-4 mt-4"
+            className="bg-red-500 rounded-2xl py-4 shadow-lg shadow-red-500/50"
             onPress={handleSignIn}
             activeOpacity={0.8}
           >
@@ -94,8 +99,7 @@ const Signin = () => {
             </Text>
           </TouchableOpacity>
 
-          {/* Sign Up Link */}
-          <View className="flex-row justify-center items-center mt-6">
+          <View className="flex-row justify-center items-center mt-8">
             <Text className="text-gray-600 text-base" style={{ fontFamily: 'Quicksand-Regular' }}>
               Don&apos;t have an account?{' '}
             </Text>
