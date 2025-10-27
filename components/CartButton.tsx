@@ -1,14 +1,25 @@
 import { images } from "@/constants";
+import { router } from "expo-router";
 import React from 'react';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Text, TouchableOpacity, View } from 'react-native';
 // import {useCartStore} from "@/store/cart.store";
 
 const CartButton = () => {
     // const { getTotalItems } = useCartStore();
     const totalItems = 17;
 
+    const handleCartPress = () => {
+        try {
+            console.log('Opening cart')
+            // Navigate to cart tab
+            router.push('/(tabs)/Cart')
+        } catch (error: any) {
+            Alert.alert('Error', error.message || 'Failed to open cart')
+        }
+    }
+
     return (
-        <TouchableOpacity className='cart-btn ' onPress={() => { }}>
+        <TouchableOpacity className='cart-btn' onPress={handleCartPress}>
             <Image
                 source={images.bag}
                 className="size-5"

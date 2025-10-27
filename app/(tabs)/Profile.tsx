@@ -1,7 +1,7 @@
 import { images } from '@/constants'
 import { router } from 'expo-router'
 import React from 'react'
-import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function Profile() {
@@ -40,8 +40,63 @@ export default function Profile() {
   ]
 
   const handleLogout = () => {
-    console.log('Logout')
-    router.replace('/(auth)/Signin')
+    try {
+      Alert.alert(
+        'Logout',
+        'Are you sure you want to logout?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          },
+          {
+            text: 'Logout',
+            style: 'destructive',
+            onPress: () => {
+              try {
+                console.log('Logging out...')
+                // Add your logout logic here (clear tokens, etc.)
+                router.replace('/(auth)/Signin')
+              } catch (error: any) {
+                Alert.alert('Logout Error', error.message || 'Failed to logout. Please try again.')
+              }
+            }
+          }
+        ]
+      )
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'An unexpected error occurred')
+    }
+  }
+
+  const handleMenuItemPress = (title: string) => {
+    try {
+      console.log(`Navigating to ${title}`)
+      // Add navigation logic here
+      Alert.alert('Coming Soon', `${title} feature will be available soon!`)
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'An unexpected error occurred')
+    }
+  }
+
+  const handleQuickAction = (title: string) => {
+    try {
+      console.log(`Opening ${title}`)
+      // Add navigation logic here
+      Alert.alert('Coming Soon', `${title} feature will be available soon!`)
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'An unexpected error occurred')
+    }
+  }
+
+  const handleEditProfile = () => {
+    try {
+      console.log('Edit profile')
+      // Add edit profile logic here
+      Alert.alert('Coming Soon', 'Edit profile feature will be available soon!')
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'An unexpected error occurred')
+    }
   }
 
   return (
@@ -91,6 +146,7 @@ export default function Profile() {
             <TouchableOpacity 
               className="bg-primary rounded-2xl py-3 flex-row items-center justify-center"
               activeOpacity={0.8}
+              onPress={handleEditProfile}
             >
               <Image source={images.pencil} className="w-5 h-5 mr-2" tintColor="#FFFFFF" />
               <Text className="text-white text-base" style={{ fontFamily: 'Quicksand-Bold' }}>
@@ -108,6 +164,7 @@ export default function Profile() {
                 key={action.id}
                 className="w-1/2 px-2 mb-3"
                 activeOpacity={0.7}
+                onPress={() => handleQuickAction(action.title)}
               >
                 <View className="bg-white rounded-2xl p-4 shadow-sm">
                   <View 
@@ -147,6 +204,7 @@ export default function Profile() {
                     index !== section.items.length - 1 ? 'border-b-2 border-gray-50' : ''
                   }`}
                   activeOpacity={0.7}
+                  onPress={() => handleMenuItemPress(item.title)}
                 >
                   <View 
                     className="w-11 h-11 rounded-xl items-center justify-center"

@@ -2,7 +2,7 @@ import CustomInput from '@/components/CustomInput'
 import { images } from '@/constants'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 
 const Signup = () => {
   const [name, setName] = useState('')
@@ -70,9 +70,26 @@ const Signup = () => {
   }
 
   const handleSignUp = () => {
-    if (validateForm()) {
-      console.log('Sign up with:', { name, email, phone, password })
-      router.replace('/(auth)/Signin')
+    try {
+      if (validateForm()) {
+        console.log('Sign up with:', { name, email, phone, password })
+        // Here you would typically call your API to create the account
+        Alert.alert(
+          'Success!',
+          'Account created successfully. Please sign in.',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.replace('/(auth)/Signin')
+            }
+          ]
+        )
+      }
+    } catch (error: any) {
+      Alert.alert(
+        'Sign up error',
+        error.message || 'An unexpected error occurred while creating your account'
+      )
     }
   }
 

@@ -2,7 +2,7 @@ import CustomInput from '@/components/CustomInput'
 import { images } from '@/constants'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 
 const Signin = () => {
   const [email, setEmail] = useState('')
@@ -34,9 +34,13 @@ const Signin = () => {
   }
 
   const handleSignIn = () => {
-    if (validateForm()) {
-      console.log('Sign in with:', email, password)
-      router.replace('/(tabs)/Index')
+    try {
+      if (validateForm()) {
+        console.log('Sign in with:', email, password)
+        router.replace('/(tabs)/Index')
+      }
+    } catch (error: any) {
+      Alert.alert('Sign in error', error.message || 'An unexpected error occurred')
     }
   }
 
