@@ -1,511 +1,133 @@
-import API_BASE_URL, { getAuthHeaders } from './config';
+import apiClient from './apiClient';
 
-// Auth Service
+// ==================== AUTH SERVICE ====================
 export const authService = {
-  // Register new user
   register: async (userData) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(userData)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+    return apiClient.post('/auth/register', userData);
   },
 
-  // Login user
   login: async (email, password) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+    return apiClient.post('/auth/login', { email, password });
   },
 
-  // Get current user
   getMe: async (token) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
-        method: 'GET',
-        headers: getAuthHeaders(token)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to get user data');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+    return apiClient.get('/auth/me', token);
   },
 
-  // Logout
   logout: async (token) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/logout`, {
-        method: 'POST',
-        headers: getAuthHeaders(token)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Logout failed');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+    return apiClient.post('/auth/logout', {}, token);
   }
 };
 
-// Food Service
+// ==================== FOOD SERVICE ====================
 export const foodService = {
-  // Get all food items
-  getAll: async (filters = {}) => {
-    try {
-      const queryParams = new URLSearchParams(filters).toString();
-      const url = `${API_BASE_URL}/food${queryParams ? `?${queryParams}` : ''}`;
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: getAuthHeaders()
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch food items');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+  getAll: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/foods?${queryString}` : '/foods';
+    return apiClient.get(endpoint);
   },
 
-  // Get food by ID
   getById: async (id) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/food/${id}`, {
-        method: 'GET',
-        headers: getAuthHeaders()
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch food item');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+    return apiClient.get(`/foods/${id}`);
   },
 
-  // Get food by category
   getByCategory: async (category) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/food/category/${category}`, {
-        method: 'GET',
-        headers: getAuthHeaders()
-      });
+    return apiClient.get(`/foods/category/${category}`);
+  },
 
-      const data = await response.json();
+  search: async (searchTerm) => {
+    return apiClient.get(`/foods?search=${encodeURIComponent(searchTerm)}`);
+  },
 
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch food items');
-      }
+  create: async (foodData, token) => {
+    return apiClient.post('/foods', foodData, token);
+  },
 
-      return data;
-    } catch (error) {
-      throw error;
-    }
+  update: async (id, foodData, token) => {
+    return apiClient.put(`/foods/${id}`, foodData, token);
+  },
+
+  delete: async (id, token) => {
+    return apiClient.delete(`/foods/${id}`, token);
   }
 };
 
-// Cart Service
+// ==================== CART SERVICE ====================
 export const cartService = {
-  // Get user cart
   getCart: async (token) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/cart`, {
-        method: 'GET',
-        headers: getAuthHeaders(token)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch cart');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+    return apiClient.get('/cart', token);
   },
 
-  // Add item to cart
-  addItem: async (token, foodId, quantity = 1, selectedToppings = []) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/cart/add`, {
-        method: 'POST',
-        headers: getAuthHeaders(token),
-        body: JSON.stringify({ foodId, quantity, selectedToppings })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to add item to cart');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+  addItem: async (itemData, token) => {
+    return apiClient.post('/cart/items', itemData, token);
   },
 
-  // Update cart item
-  updateItem: async (token, itemId, quantity) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/cart/update/${itemId}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(token),
-        body: JSON.stringify({ quantity })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to update cart item');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+  updateItem: async (itemId, updates, token) => {
+    return apiClient.put(`/cart/items/${itemId}`, updates, token);
   },
 
-  // Remove item from cart
-  removeItem: async (token, itemId) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/cart/remove/${itemId}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(token)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to remove item from cart');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+  removeItem: async (itemId, token) => {
+    return apiClient.delete(`/cart/items/${itemId}`, token);
   },
 
-  // Clear cart
   clearCart: async (token) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/cart/clear`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(token)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to clear cart');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+    return apiClient.delete('/cart', token);
   }
 };
 
-// Order Service
+// ==================== ORDER SERVICE ====================
 export const orderService = {
-  // Create order
-  createOrder: async (token, orderData) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/orders`, {
-        method: 'POST',
-        headers: getAuthHeaders(token),
-        body: JSON.stringify(orderData)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to create order');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+  createOrder: async (orderData, token) => {
+    return apiClient.post('/orders', orderData, token);
   },
 
-  // Get user orders
   getMyOrders: async (token) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/orders/my-orders`, {
-        method: 'GET',
-        headers: getAuthHeaders(token)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch orders');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+    return apiClient.get('/orders', token);
   },
 
-  // Get order by ID
-  getOrderById: async (token, orderId) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
-        method: 'GET',
-        headers: getAuthHeaders(token)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch order');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+  getOrderById: async (orderId, token) => {
+    return apiClient.get(`/orders/${orderId}`, token);
   },
 
-  // Cancel order
-  cancelOrder: async (token, orderId, cancelReason) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/orders/${orderId}/cancel`, {
-        method: 'PUT',
-        headers: getAuthHeaders(token),
-        body: JSON.stringify({ cancelReason })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to cancel order');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+  cancelOrder: async (orderId, token) => {
+    return apiClient.put(`/orders/${orderId}/cancel`, {}, token);
   }
 };
 
-// User Service
+// ==================== USER SERVICE ====================
 export const userService = {
-  // Get user profile
   getProfile: async (token) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/profile`, {
-        method: 'GET',
-        headers: getAuthHeaders(token)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch profile');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+    return apiClient.get('/users/profile', token);
   },
 
-  // Update profile
-  updateProfile: async (token, profileData) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/profile`, {
-        method: 'PUT',
-        headers: getAuthHeaders(token),
-        body: JSON.stringify(profileData)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to update profile');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+  updateProfile: async (profileData, token) => {
+    return apiClient.put('/users/profile', profileData, token);
   },
 
-  // Get favorites
   getFavorites: async (token) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/favorites`, {
-        method: 'GET',
-        headers: getAuthHeaders(token)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch favorites');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+    return apiClient.get('/users/favorites', token);
   },
 
-  // Toggle favorite
-  toggleFavorite: async (token, foodId) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/favorites/${foodId}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(token)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to update favorites');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+  toggleFavorite: async (foodId, token) => {
+    return apiClient.post(`/users/favorites/${foodId}`, {}, token);
   }
 };
 
-// Address Service
+// ==================== ADDRESS SERVICE ====================
 export const addressService = {
-  // Get all addresses
   getAll: async (token) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/address`, {
-        method: 'GET',
-        headers: getAuthHeaders(token)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch addresses');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+    return apiClient.get('/addresses', token);
   },
 
-  // Create address
-  create: async (token, addressData) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/address`, {
-        method: 'POST',
-        headers: getAuthHeaders(token),
-        body: JSON.stringify(addressData)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to create address');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+  create: async (addressData, token) => {
+    return apiClient.post('/addresses', addressData, token);
   },
 
-  // Update address
-  update: async (token, addressId, addressData) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/address/${addressId}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(token),
-        body: JSON.stringify(addressData)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to update address');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+  update: async (addressId, addressData, token) => {
+    return apiClient.put(`/addresses/${addressId}`, addressData, token);
   },
 
-  // Delete address
-  delete: async (token, addressId) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/address/${addressId}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(token)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to delete address');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+  delete: async (addressId, token) => {
+    return apiClient.delete(`/addresses/${addressId}`, token);
   }
 };
