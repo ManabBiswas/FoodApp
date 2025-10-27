@@ -1,13 +1,16 @@
 import CustomInput from '@/components/CustomInput'
 import { images } from '@/constants'
+import { authService } from '@/services/api'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 
 const Signin = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState({ email: '', password: '' })
+  const [loading, setLoading] = useState(false)
 
   const validateForm = () => {
     let isValid = true
@@ -33,14 +36,32 @@ const Signin = () => {
     return isValid
   }
 
-  const handleSignIn = () => {
+  const handleSignIn = async () => {
     try {
       if (validateForm()) {
-        console.log('Sign in with:', email, password)
-        router.replace('/(tabs)/Index')
+        setLoading(true)
+        
+        // Call API
+        const response = await authService.login(email, password)
+        
+        if (response.status === 'success') {
+          // Store token and user data
+          await AsyncStorage.setItem('userToken', response.data.token)
+          await AsyncStorage.setItem('userData', JSON.stringify(response.data))
+          
+          Alert.alert('Success', 'Login successful!', [
+            {
+              text: 'OK',
+              onPress: () => router.replace('/(tabs)/Index')
+            }
+          ])
+        }
       }
     } catch (error: any) {
+      console.error('Login error:', error)
       Alert.alert('Sign in error', error.message || 'An unexpected error occurred')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -97,10 +118,15 @@ const Signin = () => {
             className="bg-red-500 rounded-2xl py-4 shadow-lg shadow-red-500/50"
             onPress={handleSignIn}
             activeOpacity={0.8}
+            disabled={loading}
           >
-            <Text className="text-white text-center text-lg font-semibold" style={{ fontFamily: 'Quicksand-Bold' }}>
-              Sign In
-            </Text>
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text className="text-white text-center text-lg font-semibold" style={{ fontFamily: 'Quicksand-Bold' }}>
+                Sign In
+              </Text>
+            )}
           </TouchableOpacity>
 
           <View className="flex-row justify-center items-center mt-8">

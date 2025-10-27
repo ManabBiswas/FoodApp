@@ -1,8 +1,10 @@
 import CustomInput from '@/components/CustomInput'
 import { images } from '@/constants'
+import { authService } from '@/services/api'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 
 const Signup = () => {
   const [name, setName] = useState('')
@@ -10,6 +12,7 @@ const Signup = () => {
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState({
     name: '',
     email: '',
@@ -69,27 +72,41 @@ const Signup = () => {
     return isValid
   }
 
-  const handleSignUp = () => {
+  const handleSignUp = async () => {
     try {
       if (validateForm()) {
-        console.log('Sign up with:', { name, email, phone, password })
-        // Here you would typically call your API to create the account
-        Alert.alert(
-          'Success!',
-          'Account created successfully. Please sign in.',
-          [
-            {
-              text: 'OK',
-              onPress: () => router.replace('/(auth)/Signin')
-            }
-          ]
-        )
+        setLoading(true)
+        const response = await authService.register({
+          name,
+          email,
+          phone,
+          password
+        })
+        
+        if (response.status === 'success') {
+          // Store token and user data
+          await AsyncStorage.setItem('userToken', response.data.token)
+          await AsyncStorage.setItem('userData', JSON.stringify(response.data))
+          
+          Alert.alert(
+            'Success!',
+            'Account created successfully. Welcome to FoodApp!',
+            [
+              {
+                text: 'OK',
+                onPress: () => router.replace('/(tabs)/Index')
+              }
+            ]
+          )
+        }
       }
     } catch (error: any) {
       Alert.alert(
         'Sign up error',
         error.message || 'An unexpected error occurred while creating your account'
       )
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -182,10 +199,15 @@ const Signup = () => {
           className="bg-red-500 rounded-2xl py-4 mt-2 shadow-lg shadow-red-500/50"
           onPress={handleSignUp}
           activeOpacity={0.8}
+          disabled={loading}
         >
-          <Text className="text-white text-center text-lg font-semibold" style={{ fontFamily: 'Quicksand-Bold' }}>
-            Create Account
-          </Text>
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text className="text-white text-center text-lg font-semibold" style={{ fontFamily: 'Quicksand-Bold' }}>
+              Create Account
+            </Text>
+          )}
         </TouchableOpacity>
 
         <View className="flex-row justify-center items-center mt-8">
