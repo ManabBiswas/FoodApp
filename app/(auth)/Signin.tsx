@@ -41,13 +41,15 @@ const Signin = () => {
       if (validateForm()) {
         setLoading(true)
         
-        // Call API
         const response = await authService.login(email, password)
         
         if (response.status === 'success') {
-          // Store token and user data
-          await AsyncStorage.setItem('userToken', response.data.token)
-          await AsyncStorage.setItem('userData', JSON.stringify(response.data))
+          // Extract token and user data
+          const { token, ...userData } = response.data
+          
+          // Store token and user data separately
+          await AsyncStorage.setItem('userToken', token)
+          await AsyncStorage.setItem('userData', JSON.stringify(userData))
           
           Alert.alert('Success', 'Login successful!', [
             {
@@ -59,7 +61,10 @@ const Signin = () => {
       }
     } catch (error: any) {
       console.error('Login error:', error)
-      Alert.alert('Sign in error', error.message || 'An unexpected error occurred')
+      Alert.alert(
+        'Sign in error', 
+        error.message || 'Network error. Please check your connection and try again.'
+      )
     } finally {
       setLoading(false)
     }

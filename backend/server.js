@@ -60,10 +60,10 @@ mongoose.connect(process.env.MONGODB_URI)
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/food', foodRoutes);
+app.use('/api/foods', foodRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/cart', cartRoutes);
-app.use('/api/address', addressRoutes);
+app.use('/api/addresses', addressRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

@@ -1,16 +1,39 @@
 import { images } from '@/constants'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { router } from 'expo-router'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function Profile() {
-  const user = {
-    name: 'Manab Biswas',
-    email: 'manab.biswas@example.com',
-    phone: '+1234567890',
+  const [user, setUser] = useState({
+    name: 'Guest User',
+    email: 'guest@example.com',
+    phone: '',
     avatar: images.person,
     memberSince: 'Member since 2025'
+  })
+
+  useEffect(() => {
+    loadUserData()
+  }, [])
+
+  const loadUserData = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('userData')
+      if (userData) {
+        const parsedUser = JSON.parse(userData)
+        setUser({
+          name: parsedUser.name || 'User',
+          email: parsedUser.email || '',
+          phone: parsedUser.phone || '',
+          avatar: parsedUser.avatar ? { uri: parsedUser.avatar } : images.person,
+          memberSince: 'Member since 2025'
+        })
+      }
+    } catch (error) {
+      console.error('Failed to load user data:', error)
+    }
   }
 
   const quickActions = [
@@ -52,10 +75,15 @@ export default function Profile() {
           {
             text: 'Logout',
             style: 'destructive',
-            onPress: () => {
+            onPress: async () => {
               try {
-                console.log('Logging out...')
-                // Add your logout logic here (clear tokens, etc.)
+                // Clear AsyncStorage
+                await AsyncStorage.removeItem('userToken')
+                await AsyncStorage.removeItem('userData')
+                
+                console.log('Logged out successfully')
+                
+                // Navigate to Sign In
                 router.replace('/(auth)/Signin')
               } catch (error: any) {
                 Alert.alert('Logout Error', error.message || 'Failed to logout. Please try again.')

@@ -84,9 +84,12 @@ const Signup = () => {
         })
         
         if (response.status === 'success') {
-          // Store token and user data
-          await AsyncStorage.setItem('userToken', response.data.token)
-          await AsyncStorage.setItem('userData', JSON.stringify(response.data))
+          // Extract token and user data
+          const { token, ...userData } = response.data
+          
+          // Store token and user data separately
+          await AsyncStorage.setItem('userToken', token)
+          await AsyncStorage.setItem('userData', JSON.stringify(userData))
           
           Alert.alert(
             'Success!',
