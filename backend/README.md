@@ -263,11 +263,11 @@ git push heroku main
 - Implement rate limiting per user
 - Add logging service (Winston, Morgan)
 - Add API documentation (Swagger)
-
-## 🤝 Contributing
+---
+<!-- ## 🤝 Contributing
 
 Manab Biswas
 
 ## 📄 License
 
-ISC
+ISC -->

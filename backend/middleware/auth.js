@@ -43,8 +43,9 @@ exports.protect = async (req, res, next) => {
     } catch (error) {
       return res.status(401).json({
         status: 'error',
-        message: 'Not authorized, token failed'
+        message: 'Not authorized, token failed',error
       });
+      
     }
   } catch (error) {
     res.status(500).json({
