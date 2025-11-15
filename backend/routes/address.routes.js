@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
+import { protect } from '../middleware/auth.js';
+import Address from '../models/Address.model.js';
 const router = express.Router();
-const { protect } = require('../middleware/auth');
-const Address = require('../models/Address.model');
 
 // Get all addresses for user
 router.get('/', protect, async (req, res) => {
@@ -129,4 +129,4 @@ router.delete('/:id', protect, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

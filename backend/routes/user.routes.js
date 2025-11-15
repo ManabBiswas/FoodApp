@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
+import { protect } from '../middleware/auth.js';
+import User from '../models/User.model.js';
 const router = express.Router();
-const { protect } = require('../middleware/auth');
-const User = require('../models/User.model');
 
 // Get user profile
 router.get('/profile', protect, async (req, res) => {
@@ -94,4 +94,4 @@ router.get('/favorites', protect, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,9 +1,9 @@
-const Food = require('../models/Food.model');
+import Food from '../models/Food.model.js';
 
 // @desc    Get all food items
 // @route   GET /api/food
 // @access  Public
-exports.getAllFood = async (req, res) => {
+export const getAllFood = async (req, res) => {
   try {
     const { category, search, isVegetarian, maxPrice, minRating } = req.query;
 
@@ -48,7 +48,7 @@ exports.getAllFood = async (req, res) => {
 // @desc    Get single food item
 // @route   GET /api/food/:id
 // @access  Public
-exports.getFoodById = async (req, res) => {
+export const getFoodById = async (req, res) => {
   try {
     const food = await Food.findById(req.params.id);
 
@@ -74,7 +74,7 @@ exports.getFoodById = async (req, res) => {
 // @desc    Create food item
 // @route   POST /api/food
 // @access  Private/Admin
-exports.createFood = async (req, res) => {
+export const createFood = async (req, res) => {
   try {
     const food = await Food.create(req.body);
 
@@ -93,7 +93,7 @@ exports.createFood = async (req, res) => {
 // @desc    Update food item
 // @route   PUT /api/food/:id
 // @access  Private/Admin
-exports.updateFood = async (req, res) => {
+export const updateFood = async (req, res) => {
   try {
     const food = await Food.findByIdAndUpdate(
       req.params.id,
@@ -123,7 +123,7 @@ exports.updateFood = async (req, res) => {
 // @desc    Delete food item
 // @route   DELETE /api/food/:id
 // @access  Private/Admin
-exports.deleteFood = async (req, res) => {
+export const deleteFood = async (req, res) => {
   try {
     const food = await Food.findByIdAndDelete(req.params.id);
 
@@ -149,7 +149,7 @@ exports.deleteFood = async (req, res) => {
 // @desc    Get food by category
 // @route   GET /api/food/category/:category
 // @access  Public
-exports.getFoodByCategory = async (req, res) => {
+export const getFoodByCategory = async (req, res) => {
   try {
     const foods = await Food.find({ 
       category: req.params.category,

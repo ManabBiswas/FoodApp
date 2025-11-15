@@ -1,8 +1,8 @@
-const express = require('express');
-const router = express.Router();
-const { protect } = require('../middleware/auth');
+import express from 'express';
+import { protect } from '../middleware/auth.js';
 // Cart controller will be created
-const Cart = require('../models/Cart.model');
+import Cart from '../models/Cart.model.js';
+const router = express.Router();
 
 // Get user cart
 router.get('/', protect, async (req, res) => {
@@ -160,4 +160,4 @@ router.delete('/clear', protect, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const foodSchema = new mongoose.Schema({
   name: {
@@ -77,4 +77,4 @@ const foodSchema = new mongoose.Schema({
 // Index for search optimization
 foodSchema.index({ name: 'text', description: 'text' });
 
-module.exports = mongoose.model('Food', foodSchema);
+export default mongoose.model('Food', foodSchema);

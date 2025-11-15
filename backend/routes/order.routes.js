@@ -1,14 +1,14 @@
-const express = require('express');
+import express from 'express';
+import {
+    cancelOrder,
+    createOrder,
+    getAllOrders,
+    getMyOrders,
+    getOrderById,
+    updateOrderStatus
+} from '../controllers/order.controller.js';
+import { authorize, protect } from '../middleware/auth.js';
 const router = express.Router();
-const {
-  createOrder,
-  getMyOrders,
-  getOrderById,
-  updateOrderStatus,
-  cancelOrder,
-  getAllOrders
-} = require('../controllers/order.controller');
-const { protect, authorize } = require('../middleware/auth');
 
 router.route('/')
   .post(protect, createOrder)
@@ -22,4 +22,4 @@ router.route('/:id')
 router.put('/:id/status', protect, authorize('admin'), updateOrderStatus);
 router.put('/:id/cancel', protect, cancelOrder);
 
-module.exports = router;
+export default router;

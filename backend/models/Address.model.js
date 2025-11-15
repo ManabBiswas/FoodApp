@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const addressSchema = new mongoose.Schema({
   user: {
@@ -44,4 +44,4 @@ const addressSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('Address', addressSchema);
+export default mongoose.model('Address', addressSchema);

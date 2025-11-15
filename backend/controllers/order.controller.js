@@ -1,10 +1,10 @@
-const Order = require('../models/Order.model');
-const Cart = require('../models/Cart.model');
+import Cart from '../models/Cart.model.js';
+import Order from '../models/Order.model.js';
 
 // @desc    Create new order
 // @route   POST /api/orders
 // @access  Private
-exports.createOrder = async (req, res) => {
+export const createOrder = async (req, res) => {
   try {
     const {
       orderItems,
@@ -60,7 +60,7 @@ exports.createOrder = async (req, res) => {
 // @desc    Get user orders
 // @route   GET /api/orders/my-orders
 // @access  Private
-exports.getMyOrders = async (req, res) => {
+export const getMyOrders = async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user.id })
       .populate('orderItems.food', 'name image')
@@ -82,7 +82,7 @@ exports.getMyOrders = async (req, res) => {
 // @desc    Get order by ID
 // @route   GET /api/orders/:id
 // @access  Private
-exports.getOrderById = async (req, res) => {
+export const getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate('user', 'name email phone')
@@ -118,7 +118,7 @@ exports.getOrderById = async (req, res) => {
 // @desc    Update order status
 // @route   PUT /api/orders/:id/status
 // @access  Private/Admin
-exports.updateOrderStatus = async (req, res) => {
+export const updateOrderStatus = async (req, res) => {
   try {
     const { orderStatus } = req.body;
 
@@ -155,7 +155,7 @@ exports.updateOrderStatus = async (req, res) => {
 // @desc    Cancel order
 // @route   PUT /api/orders/:id/cancel
 // @access  Private
-exports.cancelOrder = async (req, res) => {
+export const cancelOrder = async (req, res) => {
   try {
     const { cancelReason } = req.body;
 
@@ -204,7 +204,7 @@ exports.cancelOrder = async (req, res) => {
 // @desc    Get all orders (Admin)
 // @route   GET /api/orders
 // @access  Private/Admin
-exports.getAllOrders = async (req, res) => {
+export const getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find()
       .populate('user', 'name email')

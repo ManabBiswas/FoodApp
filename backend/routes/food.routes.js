@@ -1,14 +1,14 @@
-const express = require('express');
+import express from 'express';
+import {
+    createFood,
+    deleteFood,
+    getAllFood,
+    getFoodByCategory,
+    getFoodById,
+    updateFood
+} from '../controllers/food.controller.js';
+import { authorize, protect } from '../middleware/auth.js';
 const router = express.Router();
-const {
-  getAllFood,
-  getFoodById,
-  createFood,
-  updateFood,
-  deleteFood,
-  getFoodByCategory
-} = require('../controllers/food.controller');
-const { protect, authorize } = require('../middleware/auth');
 
 router.route('/')
   .get(getAllFood)
@@ -21,4 +21,4 @@ router.route('/:id')
 
 router.get('/category/:category', getFoodByCategory);
 
-module.exports = router;
+export default router;
