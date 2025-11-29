@@ -33,6 +33,8 @@ A modern, full-stack food delivery application built with React Native (Expo), N
 - ✅ Loading states & animations
 - ✅ Responsive design
 - ✅ Type-safe with TypeScript
+- ✅ ES Modules (modern import/export)
+- ✅ MVC architecture pattern
 
 ---
 
@@ -48,13 +50,14 @@ A modern, full-stack food delivery application built with React Native (Expo), N
 - **Custom Fonts** - Quicksand font family
 
 ### Backend
-- **Node.js** - Runtime environment
+- **Node.js** - Runtime environment (ES Modules)
 - **Express.js** - Web framework
 - **MongoDB** - NoSQL database
 - **Mongoose** - ODM for MongoDB
 - **JWT** - Authentication
 - **bcrypt** - Password hashing
 - **dotenv** - Environment variables
+- **ES Modules** - Modern import/export syntax
 
 ### Security & Middleware
 - **Helmet** - Security headers
@@ -98,7 +101,7 @@ FoodApp/
 │   ├── icons/                   # App icons
 │   └── images/                  # Images
 │
-├── backend/                      # Node.js backend
+├── backend/                      # Node.js backend (ES Modules)
 │   ├── models/                  # Mongoose models
 │   │   ├── User.model.js        # User schema
 │   │   ├── Food.model.js        # Food schema
@@ -109,11 +112,11 @@ FoodApp/
 │   ├── controllers/             # Business logic
 │   │   ├── auth.controller.js   # Authentication
 │   │   ├── food.controller.js   # Food operations
-│   │   ├── order.controller.js  # Order operations
-│   │   └── user.controller.js   # User operations
+│   │   └── order.controller.js  # Order operations
 │   │
 │   ├── routes/                  # API routes
 │   │   ├── auth.routes.js       # Auth endpoints
+│   │   ├── user.routes.js       # User endpoints
 │   │   ├── food.routes.js       # Food endpoints
 │   │   ├── order.routes.js      # Order endpoints
 │   │   ├── cart.routes.js       # Cart endpoints
@@ -123,9 +126,10 @@ FoodApp/
 │   │   ├── auth.js              # JWT verification
 │   │   └── errorHandler.js      # Error handling
 │   │
-│   ├── server.js                # Express server
-│   ├── package.json             # Backend dependencies
-│   └── .env                     # Environment variables
+│   ├── server.js                # Express server (ES6)
+│   ├── package.json             # Backend dependencies (type: module)
+│   ├── .env                     # Environment variables
+│   └── ES_MODULES_CONVERSION.md # Conversion documentation
 │
 ├── .env                         # Frontend environment
 ├── package.json                 # Frontend dependencies
@@ -329,9 +333,9 @@ Password: password123
 
 ### Main App
 - **Home** - Personalized dashboard with offers and menu
-- **Search** - Find food items
+- **Search** - Find food items with categories and filters
 - **Cart** - Review and manage cart items
-- **Profile** - Account settings, orders, favorites, wallet
+- **Profile** - Account settings, orders, favorites, wallet, logout
 
 ---
 
@@ -378,6 +382,7 @@ Password: password123
 
 ## 📚 Additional Documentation
 
+- [ES_MODULES_CONVERSION.md](./backend/ES_MODULES_CONVERSION.md) - ES Modules migration guide
 - [SETUP_COMPLETE.md](./SETUP_COMPLETE.md) - Complete setup guide
 <!-- - [TESTING.md](./TESTING.md) - API testing guide -->
 <!-- - [NETWORK_TROUBLESHOOTING.md](./NETWORK_TROUBLESHOOTING.md) - Network issues -->
@@ -390,17 +395,19 @@ Password: password123
 ### Phase 1 (Completed) ✅
 - [x] User authentication
 - [x] Home page with offers
-- [x] Backend API setup
+- [x] Backend API setup (ES Modules)
 - [x] MongoDB integration
 - [x] Profile page
 - [x] AsyncStorage integration
+- [x] Search page UI
+- [x] ES Modules conversion
+- [x] Complete API integration
 
 ### Phase 2 (In Progress)
 - [ ] Food listing and details
-- [ ] Search functionality
-- [ ] Cart operations
+- [ ] Cart operations (add/update/remove)
 - [ ] Order placement
-- [ ] Address management
+- [ ] Address management (CRUD)
 
 ### Phase 3 (Planned)
 - [ ] Payment gateway integration
