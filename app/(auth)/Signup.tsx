@@ -116,10 +116,10 @@ const Signup = () => {
   return (
     <ScrollView className="flex-1 px-6 pt-20 pb-8" showsVerticalScrollIndicator={false}>
       <View className="mb-10">
-        <Text className="text-4xl font-bold text-primary mb-3 font-quicksand-bold" >
-          Create Account 🎉
+        <Text className="text-4xl text-center font-bold text-primary mb-3 font-quicksand-bold" >
+          Create Account 
         </Text>
-        <Text className="text-lg text-gray-600 font-quicksand-regular">
+        <Text className="text-lg text-center text-gray-600 font-quicksand-regular">
           Sign up to start ordering
         </Text>
       </View>

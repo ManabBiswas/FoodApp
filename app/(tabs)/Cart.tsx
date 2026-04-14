@@ -1,7 +1,5 @@
-import { View, Text } from 'react-native'
-import React from 'react'
+import { View, Text, Image } from 'react-native';
 import { images } from '@/constants';
-import { Image } from 'react-native';
 
 const Cart = () => {
   return (

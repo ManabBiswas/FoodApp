@@ -1,6 +1,5 @@
 import { images } from '@/constants';
 import { Redirect, Tabs } from 'expo-router';
-import React from 'react';
 import { Image } from 'react-native';
 
 export default function _layout() {

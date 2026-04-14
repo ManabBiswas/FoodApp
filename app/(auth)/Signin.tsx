@@ -74,10 +74,10 @@ const Signin = () => {
     <ScrollView className="bg-white h-full" keyboardShouldPersistTaps="handled">
       <View className="flex-1 px-6 pt-20 pb-6">
         <View className="mb-10">
-          <Text className="text-4xl font-bold text-primary mb-3 font-quicksand-bold" >
-            Welcome Back! 👋
+          <Text className="text-4xl text-center font-bold text-primary mb-3 font-quicksand-bold" >
+            Welcome Back! 
           </Text>
-          <Text className="text-lg text-gray-600 font-quicksand-medium" >
+          <Text className="text-lg text-center text-gray-600 font-quicksand-medium" >
             Sign in to continue your delicious journey
           </Text>
         </View>

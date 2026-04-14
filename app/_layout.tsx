@@ -1,9 +1,9 @@
-import { SplashScreen, Stack } from "expo-router";
-import "./globals.css";
 import { useFonts } from "expo-font";
+import { SplashScreen, Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { StatusBar } from "expo-status-bar";
+import "./globals.css";
 
 export default function RootLayout() {
   const [fontsLoaded, error] = useFonts({
