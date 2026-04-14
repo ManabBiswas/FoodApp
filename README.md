@@ -378,16 +378,16 @@ Password: password123
 2. Check API routes in `backend/server.js`
 3. Ensure routes use plural form: `/api/foods`, `/api/addresses`
 
+<!-- 
 ---
 
 ## 📚 Additional Documentation
 
 - [ES_MODULES_CONVERSION.md](./backend/ES_MODULES_CONVERSION.md) - ES Modules migration guide
-- [SETUP_COMPLETE.md](./SETUP_COMPLETE.md) - Complete setup guide
+- [SETUP_COMPLETE.md](./SETUP_COMPLETE.md) - Complete setup guide -->
 <!-- - [TESTING.md](./TESTING.md) - API testing guide -->
 <!-- - [NETWORK_TROUBLESHOOTING.md](./NETWORK_TROUBLESHOOTING.md) - Network issues -->
 <!-- - [INTEGRATION_COMPLETE.md](./INTEGRATION_COMPLETE.md) - Integration summary -->
-
 ---
 
 ## 🛣️ Roadmap
@@ -457,8 +457,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-For support, email manab.biswas@example.com or create an issue in the repository.
+For support, email manabbiswas108108@gmail.com or create an issue in the repository.
 
 ---
 
-**Happy Coding! 🚀**
