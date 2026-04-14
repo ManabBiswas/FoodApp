@@ -1,3 +1,5 @@
+import { AuthProvider } from "@/contexts/AuthContext";
+import { CartProvider } from "@/contexts/CartContext";
 import { useFonts } from "expo-font";
 import { SplashScreen, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -23,10 +25,14 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1 }}>
-        <StatusBar style="dark" translucent />
-        <Stack screenOptions={{ headerShown: false }} />
-      </SafeAreaView>
+      <AuthProvider>
+        <CartProvider>
+          <SafeAreaView style={{ flex: 1 }}>
+            <StatusBar style="dark" translucent />
+            <Stack screenOptions={{ headerShown: false }} />
+          </SafeAreaView>
+        </CartProvider>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }

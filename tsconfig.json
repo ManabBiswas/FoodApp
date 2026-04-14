@@ -1,9 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "lib": [
-      "ES2020"
-    ],
+    "lib": ["ES2020"],
     "jsx": "react-jsx",
     "module": "ESNext",
     "moduleResolution": "bundler",
@@ -16,15 +14,9 @@
     "isolatedModules": true,
     "noEmit": true,
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     },
-    "types": [
-      "node",
-      "react",
-      "react-native"
-    ]
+    "types": ["node", "react", "react-native"]
   },
   "include": [
     "**/*.ts",
@@ -34,12 +26,6 @@
     "nativewind-env.d.ts",
     "global.d.ts"
   ],
-  "exclude": [
-    "app-example/**",
-    "node_modules",
-    ".expo",
-    "dist",
-    "build"
-  ],
+  "exclude": ["app-example/**", "node_modules", ".expo", "dist", "build"],
   "extends": "expo/tsconfig.base"
 }

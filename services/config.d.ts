@@ -1,6 +1,6 @@
 export interface AuthHeaders {
-  'Content-Type': string;
-  'Authorization'?: string;
+  "Content-Type": string;
+  Authorization?: string;
 }
 
 declare const API_BASE_URL: string;
