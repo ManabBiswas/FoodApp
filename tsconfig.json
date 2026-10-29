@@ -26,6 +26,6 @@
     "nativewind-env.d.ts",
     "global.d.ts"
   ],
-  "exclude": ["app-example/**", "node_modules", ".expo", "dist", "build"],
+  "exclude": ["app-example/**", "CONTEXT_EXAMPLES.tsx", "node_modules", ".expo", "dist", "build"],
   "extends": "expo/tsconfig.base"
 }

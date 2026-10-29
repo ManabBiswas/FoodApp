@@ -6,6 +6,7 @@ node_modules/
 # Expo
 .expo/
 dist/
+dist-test/
 web-build/
 expo-env.d.ts
 
@@ -48,3 +49,8 @@ app-example
 !README.md
 !SETUP_COMPLETE.md
 
+# Local agent skills installed with `npx skills`
+.agents/
+
+dist-test-android
+dist-test
