@@ -4,8 +4,10 @@ import { useFonts } from "expo-font";
 import { SplashScreen, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import "./globals.css";
+
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [fontsLoaded, error] = useFonts({
@@ -27,10 +29,8 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AuthProvider>
         <CartProvider>
-          <SafeAreaView style={{ flex: 1 }}>
-            <StatusBar style="dark" translucent />
-            <Stack screenOptions={{ headerShown: false }} />
-          </SafeAreaView>
+          <StatusBar style="dark" />
+          <Stack screenOptions={{ headerShown: false }} />
         </CartProvider>
       </AuthProvider>
     </SafeAreaProvider>
