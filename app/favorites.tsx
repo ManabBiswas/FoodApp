@@ -1,11 +1,11 @@
 import { images } from '@/constants';
+import { FoodGridSkeleton } from '@/components/Skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { userService } from '@/services/api';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   FlatList,
   Image,
@@ -114,9 +114,8 @@ export default function Favorites() {
       </View>
 
       {loading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#EF4444" />
-          <Text className="mt-4 font-quicksand-regular text-gray-500">Loading favorites...</Text>
+        <View className="px-4 pt-4">
+          <FoodGridSkeleton count={6} />
         </View>
       ) : favorites.length === 0 ? (
         <View className="flex-1 items-center justify-center px-8">

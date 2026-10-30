@@ -1,10 +1,18 @@
 import { images } from '@/constants';
+import { useAuth } from '@/contexts/AuthContext';
 import { Redirect, Tabs } from 'expo-router';
 import { Image } from 'react-native';
 
-export default function _layout() {
-  const isAuthenticated = true; // Replace with real authentication logic
-  if (!isAuthenticated) return <Redirect href="/(auth)/Signin" />
+export default function TabsLayout() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    return <Redirect href="/(auth)/Signin" />;
+  }
 
   return (
     <Tabs
@@ -30,7 +38,7 @@ export default function _layout() {
         name="Index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color }) => (
             <Image source={images.home} className="size-6" style={{ tintColor: color }} />
           ),
         }}
@@ -39,7 +47,7 @@ export default function _layout() {
         name="Search"
         options={{
           title: 'Search',
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color }) => (
             <Image source={images.search} className="size-6" style={{ tintColor: color }} />
           ),
         }}
@@ -48,7 +56,7 @@ export default function _layout() {
         name="Cart"
         options={{
           title: 'Cart',
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color }) => (
             <Image source={images.cart} className="size-6" style={{ tintColor: color }} />
           ),
         }}
@@ -57,12 +65,11 @@ export default function _layout() {
         name="Profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, focused }) => (
-            // <Text style={{ fontSize: 24, color }}>👤</Text>
+          tabBarIcon: ({ color }) => (
             <Image source={images.person} className="size-6" style={{ tintColor: color }} />
           ),
         }}
       />
     </Tabs>
-  )
+  );
 }

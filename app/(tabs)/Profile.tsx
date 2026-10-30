@@ -1,46 +1,78 @@
 import { images } from '@/constants'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { router } from 'expo-router'
-import React, { useEffect, useState } from 'react'
-import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import { Skeleton } from '@/components/Skeleton'
+import { useAuth } from '@/contexts/AuthContext'
+import { useWallet } from '@/contexts/WalletContext'
+import { router, useFocusEffect } from 'expo-router'
+import React, { useCallback } from 'react'
+import { Alert, Image, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function Profile() {
-  const [user, setUser] = useState({
-    name: 'Guest User',
-    email: 'guest@example.com',
-    phone: '',
-    avatar: images.person,
-    memberSince: 'Member since 2025'
-  })
+  const { user, logout, refreshUser, isLoading } = useAuth()
+  const { balance } = useWallet()
 
-  useEffect(() => {
-    loadUserData()
-  }, [])
+  useFocusEffect(
+    useCallback(() => {
+      refreshUser()
+    }, [refreshUser])
+  )
 
-  const loadUserData = async () => {
-    try {
-      const userData = await AsyncStorage.getItem('userData')
-      if (userData) {
-        const parsedUser = JSON.parse(userData)
-        setUser({
-          name: parsedUser.name || 'User',
-          email: parsedUser.email || '',
-          phone: parsedUser.phone || '',
-          avatar: parsedUser.avatar ? { uri: parsedUser.avatar } : images.person,
-          memberSince: 'Member since 2025'
-        })
-      }
-    } catch (error) {
-      console.error('Failed to load user data:', error)
-    }
+  if (isLoading || !user) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50">
+        <View className="bg-primary rounded-b-[40px] pb-8 mb-4">
+          <View className="px-6 pt-4 pb-6">
+            <Text className="text-white text-2xl" style={{ fontFamily: 'Quicksand-Bold' }}>
+              My Profile
+            </Text>
+          </View>
+
+          <View className="mx-6 bg-white rounded-3xl p-5">
+            <View className="flex-row items-center mb-4">
+              <Skeleton className="w-24 h-24 rounded-3xl" />
+              <View className="flex-1 ml-4">
+                <Skeleton className="h-5 w-40 rounded-full mb-2" />
+                <Skeleton className="h-3.5 w-52 rounded-full mb-2" />
+                <Skeleton className="h-6 w-28 rounded-full" />
+              </View>
+            </View>
+            <Skeleton className="h-11 w-full rounded-2xl" />
+          </View>
+        </View>
+
+        <View className="px-6">
+          <View className="flex-row flex-wrap -mx-2">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <View key={index} className="w-1/2 px-2 mb-3">
+                <View className="bg-white rounded-2xl p-4">
+                  <Skeleton className="w-12 h-12 rounded-2xl mb-3" />
+                  <Skeleton className="h-5 w-20 rounded-full" />
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      </SafeAreaView>
+    )
   }
 
-  const quickActions = [
-    { id: 1, icon: images.bag, title: 'Orders', count: '24', color: '#FF6B6B' },
-    { id: 2, icon: images.star, title: 'Favorites', count: '12', color: '#FFD93D' },
-    { id: 3, icon: images.location, title: 'Address', count: '3', color: '#6BCF7F' },
-    { id: 4, icon: images.rupee, title: 'Wallet', count: '₹250', color: '#4ECDC4' },
+  const quickActions: {
+    id: number
+    icon: any
+    title: string
+    color: string
+    subtitle?: string
+  }[] = [
+    { id: 1, icon: images.bag, title: 'Orders', color: '#FF6B6B' },
+    { id: 2, icon: images.star, title: 'Favorites', color: '#FFD93D' },
+    { id: 3, icon: images.location, title: 'Address', color: '#6BCF7F' },
+    {
+      id: 4,
+      icon: images.rupee,
+      title: 'Wallet',
+      color: '#4ECDC4',
+      subtitle: `₹${balance.toFixed(2)}`,
+    },
   ]
 
   const menuSections = [
@@ -62,69 +94,82 @@ export default function Profile() {
     }
   ]
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
-      Alert.alert(
-        'Logout',
-        'Are you sure you want to logout?',
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel'
-          },
-          {
-            text: 'Logout',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                // Clear AsyncStorage
-                await AsyncStorage.removeItem('userToken')
-                await AsyncStorage.removeItem('userData')
-                
-                console.log('Logged out successfully')
-                
-                // Navigate to Sign In
-                router.replace('/(auth)/Signin')
-              } catch (error: any) {
-                Alert.alert('Logout Error', error.message || 'Failed to logout. Please try again.')
-              }
-            }
-          }
-        ]
-      )
+      let confirmed: boolean
+
+      if (Platform.OS === 'web') {
+        // React Native Web's Alert is a no-op, so use the browser dialog.
+        const webConfirm = (globalThis as { confirm?: (message: string) => boolean }).confirm
+        confirmed = webConfirm ? webConfirm('Are you sure you want to logout?') : true
+      } else {
+        confirmed = await new Promise<boolean>((resolve) => {
+          Alert.alert(
+            'Logout',
+            'Are you sure you want to logout?',
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Logout', style: 'destructive', onPress: () => resolve(true) }
+            ]
+          )
+        })
+      }
+
+      if (!confirmed) return
+
+      await logout()
+      router.replace('/(auth)/Signin')
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'An unexpected error occurred')
+      Alert.alert('Logout Error', error.message || 'Failed to logout. Please try again.')
     }
   }
 
   const handleMenuItemPress = (title: string) => {
-    try {
-      console.log(`Navigating to ${title}`)
-      // Add navigation logic here
-      Alert.alert('Coming Soon', `${title} feature will be available soon!`)
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'An unexpected error occurred')
+    switch (title) {
+      case 'Edit Profile':
+        router.push('/edit-profile')
+        break
+      case 'Delivery Addresses':
+        router.push('/addresses')
+        break
+      case 'Notifications':
+        Alert.alert('Coming Soon', 'Notification settings will be available soon.')
+        break
+      case 'Rate Us':
+        Alert.alert('Coming Soon', 'Rating the app will be available soon.')
+        break
+      case 'Help & Support':
+        Alert.alert('Help & Support', 'Email us at manabbiswas108108@gmail.com')
+        break
+      case 'Terms & Conditions':
+        Alert.alert('Coming Soon', 'Terms and conditions will be available soon.')
+        break
+      default:
+        Alert.alert('Coming Soon', `${title} will be available soon!`)
     }
   }
 
   const handleQuickAction = (title: string) => {
-    try {
-      console.log(`Opening ${title}`)
-      // Add navigation logic here
-      Alert.alert('Coming Soon', `${title} feature will be available soon!`)
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'An unexpected error occurred')
+    switch (title) {
+      case 'Orders':
+        router.push('/orders')
+        break
+      case 'Favorites':
+        router.push('/favorites')
+        break
+      case 'Address':
+        router.push('/addresses')
+        break
+      case 'Wallet':
+        router.push('/wallet')
+        break
+      default:
+        Alert.alert('Coming Soon', `${title} will be available soon!`)
     }
   }
 
   const handleEditProfile = () => {
-    try {
-      console.log('Edit profile')
-      // Add edit profile logic here
-      Alert.alert('Coming Soon', 'Edit profile feature will be available soon!')
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'An unexpected error occurred')
-    }
+    router.push('/edit-profile')
   }
 
   return (
@@ -144,7 +189,7 @@ export default function Profile() {
             <View className="flex-row items-center mb-4">
               <View className="relative">
                 <Image
-                  source={user.avatar}
+                  source={user.avatar ? { uri: user.avatar } : images.person}
                   className="w-24 h-24 rounded-3xl"
                   resizeMode="cover"
                 />
@@ -207,11 +252,13 @@ export default function Profile() {
                     />
                   </View>
                   <Text className="text-2xl text-gray-900 mb-1" style={{ fontFamily: 'Quicksand-Bold' }}>
-                    {action.count}
-                  </Text>
-                  <Text className="text-sm text-gray-600" style={{ fontFamily: 'Quicksand-Medium' }}>
                     {action.title}
                   </Text>
+                  {action.subtitle ? (
+                    <Text className="text-sm text-gray-500" style={{ fontFamily: 'Quicksand-Medium' }}>
+                      {action.subtitle}
+                    </Text>
+                  ) : null}
                 </View>
               </TouchableOpacity>
             ))}

@@ -1,37 +1,23 @@
 import CartButton from "@/components/CartButton";
 import { images, offers } from "@/constants";
 import { foodService } from "@/services/api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
+import { FoodGridSkeleton } from "@/components/Skeleton";
 import { Fragment, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, Image, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Alert, FlatList, Image, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Index() {
+  const { user } = useAuth();
+  const { addItem } = useCart();
   const [foods, setFoods] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userData, setUserData] = useState<any>(null);
-
-  useEffect(() => {
-    loadUserData();
-    fetchFoods();
-  }, []);
-
-  const loadUserData = async () => {
-    try {
-      const data = await AsyncStorage.getItem('userData');
-      if (data) {
-        setUserData(JSON.parse(data));
-      }
-    } catch (error) {
-      console.error('Failed to load user data:', error);
-    }
-  };
 
   const fetchFoods = async () => {
     try {
-      setLoading(true);
       const response = await foodService.getAll();
-      
+
       if (response.status === 'success') {
         setFoods(response.data || []);
       }
@@ -42,6 +28,10 @@ export default function Index() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchFoods();
+  }, []);
 
   const isEven = (num: number) => num % 2 === 0;
 
@@ -54,12 +44,12 @@ export default function Index() {
     }
   }
 
-  const handleFoodPress = (food: any) => {
+  const handleFoodPress = async (food: any) => {
     try {
-      console.log('Food selected:', food.name)
-      Alert.alert(food.name, `Price: $${food.price}\n${food.description || 'No description available'}`)
+      await addItem(food._id, 1);
+      Alert.alert('Added to Cart', `${food.name} has been added to your cart.`);
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to open food details')
+      Alert.alert('Error', error.message || 'Failed to add item to cart');
     }
   }
 
@@ -78,7 +68,7 @@ export default function Index() {
       <View className="flex-row justify-between items-start px-4 py-2">
         <View className="flex-1">
           <Text className="h3-bold text-quaternary">
-            {userData ? `Hey ${userData.name}! 👋` : 'Welcome!'}
+            {user ? `Hey ${user.name}! 👋` : 'Welcome!'}
           </Text>
           <TouchableOpacity 
             className="flex-row items-center mt-1 gap-x-1"
@@ -139,12 +129,7 @@ export default function Index() {
           </View>
 
           {loading ? (
-            <View className="py-10">
-              <ActivityIndicator size="large" color="#EF4444" />
-              <Text className="text-center mt-4 text-gray-600 font-quicksand-regular">
-                Loading menu items...
-              </Text>
-            </View>
+            <FoodGridSkeleton count={6} />
           ) : foods.length === 0 ? (
             <View className="py-10 px-4">
               <Text className="text-center text-gray-600 font-quicksand-regular text-lg">
@@ -178,13 +163,20 @@ export default function Index() {
                   </Text>
                   <View className="flex-row justify-between items-center mt-2">
                     <Text className="font-quicksand-bold text-red-500">
-                      ${food.price?.toFixed(2)}
+                      ₹{food.price?.toFixed(2)}
                     </Text>
-                    <View className="bg-red-500 rounded-full px-3 py-1">
+                    <TouchableOpacity
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        addItem(food._id, 1);
+                      }}
+                      className="bg-red-500 rounded-full px-3 py-1"
+                      activeOpacity={0.8}
+                    >
                       <Text className="text-white font-quicksand-semibold text-xs">
                         Add
                       </Text>
-                    </View>
+                    </TouchableOpacity>
                   </View>
                 </TouchableOpacity>
               ))}

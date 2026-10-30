@@ -1,6 +1,8 @@
 import { images } from '@/constants'
+import { FoodGridSkeleton } from '@/components/Skeleton'
 import { foodService } from '@/services/api'
-import React, { useCallback, useEffect, useState } from 'react'
+import { useCart } from '@/contexts/CartContext'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -15,11 +17,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function Search() {
+  const { addItem } = useCart()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [foods, setFoods] = useState<any[]>([])
-  const [filteredFoods, setFilteredFoods] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [isSearching, setIsSearching] = useState(false)
 
   const categories = [
@@ -33,11 +35,25 @@ export default function Search() {
     { id: 'indian', name: 'Indian', icon: '🍛' },
   ]
 
+  const fetchFoods = async () => {
+    try {
+      const response = await foodService.getAll()
+
+      if (response.status === 'success') {
+        setFoods(response.data || [])
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch foods:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     fetchFoods()
   }, [])
 
-  const filterFoods = useCallback(() => {
+  const filteredFoods = useMemo(() => {
     let filtered = foods
 
     // Filter by category
@@ -56,27 +72,8 @@ export default function Search() {
       )
     }
 
-    setFilteredFoods(filtered)
+    return filtered
   }, [foods, selectedCategory, searchQuery])
-
-  useEffect(() => {
-    filterFoods()
-  }, [filterFoods])
-
-  const fetchFoods = async () => {
-    try {
-      setLoading(true)
-      const response = await foodService.getAll()
-      
-      if (response.status === 'success') {
-        setFoods(response.data || [])
-      }
-    } catch (error: any) {
-      console.error('Failed to fetch foods:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
@@ -89,7 +86,7 @@ export default function Search() {
       const response = await foodService.search(searchQuery)
       
       if (response.status === 'success') {
-        setFilteredFoods(response.data || [])
+        setFoods(response.data || [])
       }
     } catch (error: any) {
       console.error('Search error:', error)
@@ -106,7 +103,7 @@ export default function Search() {
   const handleFoodPress = (food: any) => {
     Alert.alert(
       food.name,
-      `${food.description || 'No description'}\n\nPrice: $${food.price?.toFixed(2)}`,
+      `${food.description || 'No description'}\n\nPrice: ₹${food.price?.toFixed(2)}`,
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Add to Cart', onPress: () => handleAddToCart(food) }
@@ -114,8 +111,12 @@ export default function Search() {
     )
   }
 
-  const handleAddToCart = (food: any) => {
-    Alert.alert('Success', `${food.name} added to cart!`)
+  const handleAddToCart = async (food: any) => {
+    try {
+      await addItem(food._id, 1)
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to add item to cart')
+    }
   }
 
   const renderFoodItem = ({ item }: { item: any }) => (
@@ -163,7 +164,7 @@ export default function Search() {
 
       <View className="flex-row justify-between items-center mt-3">
         <Text className="font-quicksand-bold text-red-500 text-lg">
-          ${item.price?.toFixed(2)}
+          ₹{item.price?.toFixed(2)}
         </Text>
         <TouchableOpacity
           className="bg-red-500 rounded-full px-4 py-2"
@@ -265,11 +266,8 @@ export default function Search() {
 
       {/* Food Grid */}
       {loading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#EF4444" />
-          <Text className="mt-4 font-quicksand-regular text-gray-500">
-            Loading foods...
-          </Text>
+        <View className="flex-1 px-4 pt-1">
+          <FoodGridSkeleton count={6} />
         </View>
       ) : filteredFoods.length === 0 ? (
         <View className="flex-1 items-center justify-center px-8">

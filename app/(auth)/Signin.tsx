@@ -1,12 +1,12 @@
 import CustomInput from '@/components/CustomInput'
 import { images } from '@/constants'
-import { authService } from '@/services/api'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useAuth } from '@/contexts/AuthContext'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
 import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 
 const Signin = () => {
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState({ email: '', password: '' })
@@ -40,29 +40,18 @@ const Signin = () => {
     try {
       if (validateForm()) {
         setLoading(true)
-        
-        const response = await authService.login(email, password)
-        
-        if (response.status === 'success') {
-          // Extract token and user data
-          const { token, ...userData } = response.data
-          
-          // Store token and user data separately
-          await AsyncStorage.setItem('userToken', token)
-          await AsyncStorage.setItem('userData', JSON.stringify(userData))
-          
-          Alert.alert('Success', 'Login successful!', [
-            {
-              text: 'OK',
-              onPress: () => router.replace('/(tabs)/Index')
-            }
-          ])
-        }
+        await login(email, password)
+        Alert.alert('Success', 'Login successful!', [
+          {
+            text: 'OK',
+            onPress: () => router.replace('/(tabs)/Index')
+          }
+        ])
       }
     } catch (error: any) {
       console.error('Login error:', error)
       Alert.alert(
-        'Sign in error', 
+        'Sign in error',
         error.message || 'Network error. Please check your connection and try again.'
       )
     } finally {

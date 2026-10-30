@@ -1,5 +1,7 @@
+import { AddressProvider } from "@/contexts/AddressContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { WalletProvider } from "@/contexts/WalletContext";
 import { useFonts } from "expo-font";
 import { SplashScreen, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -29,8 +31,12 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AuthProvider>
         <CartProvider>
-          <StatusBar style="dark" />
-          <Stack screenOptions={{ headerShown: false }} />
+          <AddressProvider>
+            <WalletProvider>
+              <StatusBar style="dark" />
+              <Stack screenOptions={{ headerShown: false }} />
+            </WalletProvider>
+          </AddressProvider>
         </CartProvider>
       </AuthProvider>
     </SafeAreaProvider>

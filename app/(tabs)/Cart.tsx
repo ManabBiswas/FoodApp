@@ -1,10 +1,9 @@
 import { images } from '@/constants';
-import { cartService } from '@/services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CartItemSkeleton, Skeleton } from '@/components/Skeleton';
+import { CartItem, useCart } from '@/contexts/CartContext';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   Image,
   RefreshControl,
@@ -15,70 +14,29 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-interface CartItem {
-  _id: string;
-  food: {
-    _id: string;
-    name: string;
-    image: string;
-    price: number;
-  };
-  quantity: number;
-  selectedToppings?: { name: string; price: number }[];
-}
-
-interface Cart {
-  _id: string;
-  items: CartItem[];
-  totalItems: number;
-  subtotal: number;
-}
-
 const DELIVERY_CHARGE = 50;
 const TAX_RATE = 0.05;
 
 const Cart = () => {
-  const [cart, setCart] = useState<Cart | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { cart, isLoading, itemCount, fetchCart, updateItem, removeItem } = useCart();
   const [refreshing, setRefreshing] = useState(false);
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchCart();
-  }, []);
+  }, [fetchCart]);
 
-  const fetchCart = async () => {
-    try {
-      setLoading(true);
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) {
-        router.push('/(auth)/Signin');
-        return;
-      }
-      const response = await cartService.getCart(token);
-      setCart(response.data || response);
-    } catch (error) {
-      console.error('Error fetching cart:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const onRefresh = React.useCallback(() => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchCart().finally(() => setRefreshing(false));
-  }, []);
+  }, [fetchCart]);
 
-  const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
+  const handleUpdateQuantity = useCallback(async (itemId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
 
     try {
       setUpdatingItems((prev) => new Set(prev).add(itemId));
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) return;
-
-      await cartService.updateItem(itemId, { quantity: newQuantity }, token);
-      await fetchCart();
+      await updateItem(itemId, newQuantity);
     } catch (error) {
       console.error('Error updating quantity:', error);
     } finally {
@@ -88,16 +46,12 @@ const Cart = () => {
         return next;
       });
     }
-  };
+  }, [updateItem]);
 
-  const handleRemoveItem = async (itemId: string) => {
+  const handleRemoveItem = useCallback(async (itemId: string) => {
     try {
       setUpdatingItems((prev) => new Set(prev).add(itemId));
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) return;
-
-      await cartService.removeItem(itemId, token);
-      await fetchCart();
+      await removeItem(itemId);
     } catch (error) {
       console.error('Error removing item:', error);
     } finally {
@@ -107,7 +61,7 @@ const Cart = () => {
         return next;
       });
     }
-  };
+  }, [removeItem]);
 
   const calculateItemPrice = (item: CartItem) => {
     const foodPrice = (item.food?.price || 0) * item.quantity;
@@ -210,14 +164,42 @@ const Cart = () => {
     );
   };
 
-  // Empty Cart State
-  if (loading) {
+  // Loading State
+  if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#EF4444" />
-        <Text className="mt-4 text-gray-600 font-quicksand-medium">
-          Loading cart...
-        </Text>
+      <SafeAreaView className="flex-1 bg-white">
+        <View className="px-4 py-4 border-b border-gray-200">
+          <Text className="text-2xl font-quicksand-bold text-gray-800">
+            Shopping Cart
+          </Text>
+          <Skeleton className="h-3 w-20 rounded-full mt-2" />
+        </View>
+
+        <View className="flex-1">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <CartItemSkeleton key={index} />
+          ))}
+        </View>
+
+        <View className="px-4 py-4 border-t border-gray-200">
+          <View className="gap-y-3 mb-4">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <View key={index} className="flex-row justify-between">
+                <Skeleton className="h-3 w-24 rounded-full" />
+                <Skeleton className="h-3 w-16 rounded-full" />
+              </View>
+            ))}
+            <View className="border-t border-gray-200 pt-3 flex-row justify-between items-center">
+              <Skeleton className="h-5 w-16 rounded-full" />
+              <Skeleton className="h-5 w-24 rounded-full" />
+            </View>
+          </View>
+
+          <View className="flex-row gap-3">
+            <Skeleton className="w-[48%] h-12 rounded-2xl" />
+            <Skeleton className="w-[48%] h-12 rounded-2xl" />
+          </View>
+        </View>
       </SafeAreaView>
     );
   }
@@ -268,7 +250,7 @@ const Cart = () => {
             Shopping Cart
           </Text>
           <Text className="text-sm text-gray-600 font-quicksand-regular">
-            {cart.totalItems} items
+            {itemCount} items
           </Text>
         </View>
 
@@ -335,7 +317,10 @@ const Cart = () => {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity className="flex-1 bg-red-500 py-3 rounded-2xl">
+            <TouchableOpacity
+              onPress={() => router.push('/checkout')}
+              className="flex-1 bg-red-500 py-3 rounded-2xl"
+            >
               <Text className="text-white font-quicksand-bold text-center">
                 Checkout
               </Text>

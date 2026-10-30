@@ -1,12 +1,12 @@
 import CustomInput from '@/components/CustomInput'
 import { images } from '@/constants'
-import { authService } from '@/services/api'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useAuth } from '@/contexts/AuthContext'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
 import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 
 const Signup = () => {
+  const { signup } = useAuth()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -76,32 +76,22 @@ const Signup = () => {
     try {
       if (validateForm()) {
         setLoading(true)
-        const response = await authService.register({
+        await signup({
           name,
           email,
           phone,
           password
         })
-        
-        if (response.status === 'success') {
-          // Extract token and user data
-          const { token, ...userData } = response.data
-          
-          // Store token and user data separately
-          await AsyncStorage.setItem('userToken', token)
-          await AsyncStorage.setItem('userData', JSON.stringify(userData))
-          
-          Alert.alert(
-            'Success!',
-            'Account created successfully. Welcome to FoodApp!',
-            [
-              {
-                text: 'OK',
-                onPress: () => router.replace('/(tabs)/Index')
-              }
-            ]
-          )
-        }
+        Alert.alert(
+          'Success!',
+          'Account created successfully. Welcome to FoodApp!',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.replace('/(tabs)/Index')
+            }
+          ]
+        )
       }
     } catch (error: any) {
       Alert.alert(

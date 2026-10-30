@@ -1,10 +1,10 @@
 import { images } from '@/constants';
+import { OrderCardSkeleton } from '@/components/Skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { orderService } from '@/services/api';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   FlatList,
   Image,
@@ -118,9 +118,10 @@ export default function Orders() {
       </View>
 
       {loading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#EF4444" />
-          <Text className="mt-4 font-quicksand-regular text-gray-500">Loading orders...</Text>
+        <View className="px-4 pt-4">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <OrderCardSkeleton key={index} />
+          ))}
         </View>
       ) : orders.length === 0 ? (
         <View className="flex-1 items-center justify-center px-8">
