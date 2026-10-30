@@ -57,11 +57,11 @@ const CustomInput = ({
           </TouchableOpacity>
         )}
       </View>
-      {error && (
+      {error ? (
         <Text className="text-xs text-red-500 mt-1 ml-1" style={{ fontFamily: 'Quicksand-Medium' }}>
           {error}
         </Text>
-      )}
+      ) : null}
     </View>
   )
 }

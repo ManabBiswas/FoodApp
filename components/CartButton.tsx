@@ -1,12 +1,11 @@
 import { images } from "@/constants";
+import { useCart } from "@/contexts/CartContext";
 import { router } from "expo-router";
 import React from 'react';
 import { Alert, Image, Text, TouchableOpacity, View } from 'react-native';
-// import {useCartStore} from "@/store/cart.store";
 
 const CartButton = () => {
-    // const { getTotalItems } = useCartStore();
-    const totalItems = 17;
+    const { itemCount } = useCart();
 
     const handleCartPress = () => {
         try {
@@ -26,9 +25,9 @@ const CartButton = () => {
                 resizeMode="contain"
                 // tintColor="#FFFFFF"
             />
-            {totalItems > 0 && (
+            {itemCount > 0 && (
                 <View className='cart-badge' >
-                    <Text className='small-bold text-white '>{totalItems}</Text>
+                    <Text className='small-bold text-white '>{itemCount}</Text>
                 </View>
             )}
         </TouchableOpacity>
