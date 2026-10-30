@@ -82,7 +82,7 @@ export const orderService = {
   },
 
   getMyOrders: async (token) => {
-    return apiClient.get('/orders', token);
+    return apiClient.get('/orders/my-orders', token);
   },
 
   getOrderById: async (orderId, token) => {
@@ -109,7 +109,7 @@ export const userService = {
   },
 
   toggleFavorite: async (foodId, token) => {
-    return apiClient.post(`/users/favorites/${foodId}`, {}, token);
+    return apiClient.put(`/users/favorites/${foodId}`, {}, token);
   }
 };
 

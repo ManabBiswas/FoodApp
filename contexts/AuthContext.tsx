@@ -1,6 +1,7 @@
 import { authService } from '@/services/api';
+import { isUnauthorizedError } from '@/utils/authError';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import React, { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 export interface User {
   _id: string;
@@ -38,35 +39,66 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const userRef = useRef<User | null>(null);
+
+  const clearStoredAuth = useCallback(async () => {
+    try {
+      await AsyncStorage.multiRemove(['userToken', 'userData', 'cartData']);
+    } catch (error) {
+      console.error('Failed to clear stored auth:', error);
+    }
+
+    setToken(null);
+    setUser(null);
+  }, []);
 
   // Initialize auth state from AsyncStorage on app launch
   useEffect(() => {
-    bootstrapAsync();
-  }, []);
+    const bootstrapAsync = async () => {
+      try {
+        // Fetch stored token and user data
+        const [storedToken, storedUser] = await Promise.all([
+          AsyncStorage.getItem('userToken'),
+          AsyncStorage.getItem('userData'),
+        ]);
 
-  const bootstrapAsync = async () => {
-    try {
-      // Fetch stored token and user data
-      const [storedToken, storedUser] = await Promise.all([
-        AsyncStorage.getItem('userToken'),
-        AsyncStorage.getItem('userData'),
-      ]);
+        if (storedToken && storedUser) {
+          try {
+            const parsedUser = JSON.parse(storedUser);
 
-      if (storedToken && storedUser) {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+            if (parsedUser && typeof parsedUser === 'object') {
+              setToken(storedToken);
+              setUser(parsedUser);
+            } else {
+              await clearStoredAuth();
+            }
+          } catch {
+            console.warn('Stored user data was corrupt; cleared the local session.');
+            await clearStoredAuth();
+          }
+        }
+      } catch (error) {
+        console.error('Failed to bootstrap auth:', error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to bootstrap auth:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
-  const login = async (email: string, password: string) => {
+    bootstrapAsync();
+  }, [clearStoredAuth]);
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
+  const login = useCallback(async (email: string, password: string) => {
     try {
       const response = await authService.login(email, password);
-      const { token: newToken, user: userData } = response.data;
+      const { token: newToken, ...userData } = response.data;
+
+      if (!newToken) {
+        throw new Error('Invalid login response from server');
+      }
 
       // Store in AsyncStorage
       await Promise.all([
@@ -81,12 +113,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('Login failed:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const signup = async (userData: any) => {
+  const signup = useCallback(async (userData: any) => {
     try {
       const response = await authService.register(userData);
-      const { token: newToken, user: newUser } = response.data;
+      const { token: newToken, ...newUser } = response.data;
+
+      if (!newToken) {
+        throw new Error('Invalid signup response from server');
+      }
 
       // Store in AsyncStorage
       await Promise.all([
@@ -101,35 +137,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('Signup failed:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const logout = async () => {
-    try {
-      if (token) {
+  const logout = useCallback(async () => {
+    if (token) {
+      try {
         await authService.logout(token);
+      } catch (error) {
+        // A rejected logout (for example an expired token) must not trap the
+        // user in a signed-in state. Clearing local auth always wins.
+        console.warn('Server logout failed; clearing the local session anyway.');
       }
-
-      // Clear AsyncStorage
-      await Promise.all([
-        AsyncStorage.removeItem('userToken'),
-        AsyncStorage.removeItem('userData'),
-      ]);
-
-      // Clear context
-      setToken(null);
-      setUser(null);
-    } catch (error) {
-      console.error('Logout failed:', error);
-      throw error;
     }
-  };
 
-  const refreshUser = async () => {
+    await clearStoredAuth();
+  }, [token, clearStoredAuth]);
+
+  const refreshUser = useCallback(async () => {
+    if (!token) return;
+
     try {
-      if (!token) return;
-
       const response = await authService.getMe(token);
       const userData = response.data;
+
+      if (!userData?._id) {
+        throw new Error('Invalid profile response from server');
+      }
 
       // Update AsyncStorage
       await AsyncStorage.setItem('userData', JSON.stringify(userData));
@@ -137,35 +170,47 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Update context
       setUser(userData);
     } catch (error) {
-      console.error('Failed to refresh user:', error);
-      // If token is invalid, logout
-      if (error instanceof Error && error.message.includes('401')) {
-        await logout();
+      // An expired or revoked token is unrecoverable: clear the session so the
+      // app can redirect to sign-in instead of retrying forever.
+      if (isUnauthorizedError(error)) {
+        console.warn('Session expired; signing out.');
+        await clearStoredAuth();
+        return;
       }
+
+      console.error('Failed to refresh user:', error);
     }
-  };
+  }, [token, clearStoredAuth]);
 
-  const updateUser = (updates: Partial<User>) => {
-    if (!user) return;
+  const updateUser = useCallback((updates: Partial<User>) => {
+    const currentUser = userRef.current;
+    if (!currentUser) return;
 
-    const updatedUser = { ...user, ...updates };
+    const updatedUser = { ...currentUser, ...updates };
+    userRef.current = updatedUser;
     setUser(updatedUser);
-    AsyncStorage.setItem('userData', JSON.stringify(updatedUser));
-  };
 
-  const value: AuthContextType = {
-    user,
-    token,
-    isLoading,
-    isAuthenticated: !!token && !!user,
-    login,
-    signup,
-    logout,
-    refreshUser,
-    updateUser,
-    setUser,
-    setToken,
-  };
+    AsyncStorage.setItem('userData', JSON.stringify(updatedUser)).catch((error) => {
+      console.error('Failed to persist user update:', error);
+    });
+  }, []);
+
+  const value = useMemo<AuthContextType>( // usememo for performance optimization
+    () => ({
+      user,
+      token,
+      isLoading,
+      isAuthenticated: !!token && !!user,
+      login,
+      signup,
+      logout,
+      refreshUser,
+      updateUser,
+      setUser,
+      setToken,
+    }),
+    [user, token, isLoading, login, signup, logout, refreshUser, updateUser]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

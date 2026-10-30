@@ -1,56 +1,60 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.model.js';
 
+const unauthorized = (res, message = 'Not authorized to access this route') =>
+  res.status(401).json({
+    status: 'error',
+    message,
+  });
+
 export const protect = async (req, res, next) => {
   try {
-    let token;
+    const authorization = req.headers.authorization;
 
-    // Check for token in headers
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-      token = req.headers.authorization.split(' ')[1];
+    if (!authorization || !authorization.startsWith('Bearer ')) {
+      return unauthorized(res);
     }
 
-    // Make sure token exists
+    const token = authorization.slice('Bearer '.length).trim();
+
     if (!token) {
-      return res.status(401).json({
-        status: 'error',
-        message: 'Not authorized to access this route'
-      });
+      return unauthorized(res);
     }
+
+    let decoded;
 
     try {
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      // Get user from token
-      req.user = await User.findById(decoded.id);
-
-      if (!req.user) {
-        return res.status(401).json({
-          status: 'error',
-          message: 'User not found'
-        });
-      }
-
-      if (!req.user.isActive) {
-        return res.status(403).json({
-          status: 'error',
-          message: 'Your account has been deactivated'
-        });
-      }
-
-      next();
-    } catch (error) {
-      return res.status(401).json({
-        status: 'error',
-        message: 'Not authorized, token failed',error
+      decoded = jwt.verify(token, process.env.JWT_SECRET, {
+        algorithms: ['HS256'],
       });
-      
+    } catch (error) {
+      console.error('JWT verification failed:', error.message);
+      return unauthorized(res, 'Not authorized, token failed');
     }
+
+    if (!decoded?.id) {
+      return unauthorized(res, 'Not authorized, token failed');
+    }
+
+    req.user = await User.findById(decoded.id);
+
+    if (!req.user) {
+      return unauthorized(res, 'User not found');
+    }
+
+    if (!req.user.isActive) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Your account has been deactivated',
+      });
+    }
+
+    return next();
   } catch (error) {
-    res.status(500).json({
+    console.error('Authorization error:', error);
+    return res.status(500).json({
       status: 'error',
-      message: error.message
+      message: 'Server Error',
     });
   }
 };
@@ -58,12 +62,13 @@ export const protect = async (req, res, next) => {
 // Grant access to specific roles
 export const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    if (!req.user || !roles.includes(req.user.role)) {
       return res.status(403).json({
         status: 'error',
-        message: `User role ${req.user.role} is not authorized to access this route`
+        message: 'You are not authorized to access this route',
       });
     }
-    next();
+
+    return next();
   };
 };

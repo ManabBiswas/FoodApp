@@ -36,10 +36,9 @@ const cartSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Calculate total items and subtotal before saving
-cartSchema.pre('save', function(next) {
+// Calculate total items before saving
+cartSchema.pre('save', function () {
   this.totalItems = this.items.reduce((acc, item) => acc + item.quantity, 0);
-  next();
 });
 
 export default mongoose.model('Cart', cartSchema);

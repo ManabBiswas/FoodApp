@@ -41,7 +41,11 @@ class ApiClient {
     if (ENABLE_LOGGING) {
       console.log(`📡 ${options.method || 'GET'} ${url}`);
       if (options.body) {
-        console.log('📦 Request body:', JSON.parse(options.body));
+        try {
+          console.log('📦 Request body:', JSON.parse(options.body));
+        } catch {
+          console.log('📦 Request body (raw):', options.body);
+        }
       }
     }
 
@@ -54,29 +58,49 @@ class ApiClient {
         }
       });
 
-      const data = await response.json();
+      const rawBody = await response.text();
+      let data = null;
+
+      if (rawBody) {
+        try {
+          data = JSON.parse(rawBody);
+        } catch {
+          // Non-JSON responses (proxy errors, empty gateway pages) should not
+          // surface as a confusing JSON parse crash.
+          data = { message: rawBody.slice(0, 200) };
+        }
+      }
 
       if (ENABLE_LOGGING) {
         console.log(`✅ Response [${response.status}]:`, data);
       }
 
       if (!response.ok) {
-        throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
+        const requestError = new Error(
+          data?.message || `HTTP ${response.status}: ${response.statusText}`
+        );
+        requestError.status = response.status;
+        throw requestError;
       }
 
-      return data;
+      return data ?? {};
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+
       if (ENABLE_LOGGING) {
-        console.error('❌ API Error:', error.message);
+        console.error('❌ API Error:', message);
       }
 
-      // Enhance error messages for common issues
-      if (error.message === 'Network request failed') {
+      // `Network request failed` is React Native; `Failed to fetch` and
+      // `Load failed` are the browser equivalents.
+      if (
+        message === 'Network request failed' ||
+        message === 'Failed to fetch' ||
+        message === 'Load failed' ||
+        /networkerror/i.test(message)
+      ) {
         throw new Error(
-          'Unable to connect to server. Please check:\n' +
-          '1. Backend server is running on port 5000\n' +
-          '2. Your network connection\n' +
-          '3. API URL in .env file is correct'
+          `Unable to reach the API at ${this.baseURL}. Check that the backend is running and reachable from this device.`
         );
       }
 

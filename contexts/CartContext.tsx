@@ -1,6 +1,7 @@
 import { cartService } from '@/services/api';
+import { isUnauthorizedError } from '@/utils/authError';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, ReactNode, useContext, useState } from 'react';
+import React, { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './AuthContext';
 
 export interface CartItem {
@@ -30,7 +31,7 @@ interface CartContextType {
   total: number;
 
   // Cart Methods
-  fetchCart: () => Promise<void>;
+  fetchCart: () => Promise<void>; // Fetches cart data as promises and updates state
   addItem: (foodId: string, quantity: number) => Promise<void>;
   updateItem: (itemId: string, quantity: number) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
@@ -42,9 +43,20 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<Cart | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
 
-  const fetchCart = async () => {
+  const handleAuthFailure = useCallback(
+    async (error: unknown) => {
+      if (!isUnauthorizedError(error)) return false;
+
+      console.warn('Cart session expired; signing out.');
+      await logout();
+      return true;
+    },
+    [logout]
+  );
+
+  const fetchCart = useCallback(async () => {
     if (!token) return;
 
     try {
@@ -56,14 +68,27 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Cache in AsyncStorage
       await AsyncStorage.setItem('cartData', JSON.stringify(cartData));
     } catch (error) {
+      if (await handleAuthFailure(error)) return;
       console.error('Failed to fetch cart:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token, handleAuthFailure]);
 
-  const addItem = async (foodId: string, quantity: number) => {
-    if (!token) return;
+  // Keep the cart in sync with the signed-in user. Logging out (or switching
+  // accounts) must never leave the previous user's items in memory.
+  useEffect(() => {
+    if (!token) {
+      setCart(null);
+      setIsLoading(false);
+      return;
+    }
+
+    fetchCart();
+  }, [token, fetchCart]);
+
+  const addItem = useCallback(async (foodId: string, quantity: number) => {
+    if (!token) throw new Error('Please sign in to add items to your cart.');
 
     try {
       setIsLoading(true);
@@ -76,15 +101,16 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       await AsyncStorage.setItem('cartData', JSON.stringify(cartData));
     } catch (error) {
+      if (await handleAuthFailure(error)) throw error;
       console.error('Failed to add item:', error);
       throw error;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token, handleAuthFailure]);
 
-  const updateItem = async (itemId: string, quantity: number) => {
-    if (!token) return;
+  const updateItem = useCallback(async (itemId: string, quantity: number) => {
+    if (!token) throw new Error('Please sign in to update your cart.');
 
     try {
       const response = await cartService.updateItem(
@@ -97,13 +123,14 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       await AsyncStorage.setItem('cartData', JSON.stringify(cartData));
     } catch (error) {
+      if (await handleAuthFailure(error)) throw error;
       console.error('Failed to update item:', error);
       throw error;
     }
-  };
+  }, [token, handleAuthFailure]);
 
-  const removeItem = async (itemId: string) => {
-    if (!token) return;
+  const removeItem = useCallback(async (itemId: string) => {
+    if (!token) throw new Error('Please sign in to update your cart.');
 
     try {
       const response = await cartService.removeItem(itemId, token);
@@ -112,13 +139,14 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       await AsyncStorage.setItem('cartData', JSON.stringify(cartData));
     } catch (error) {
+      if (await handleAuthFailure(error)) throw error;
       console.error('Failed to remove item:', error);
       throw error;
     }
-  };
+  }, [token, handleAuthFailure]);
 
-  const clearCart = async () => {
-    if (!token) return;
+  const clearCart = useCallback(async () => {
+    if (!token) throw new Error('Please sign in to clear your cart.');
 
     try {
       await cartService.clearCart(token);
@@ -126,26 +154,30 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       await AsyncStorage.removeItem('cartData');
     } catch (error) {
+      if (await handleAuthFailure(error)) throw error;
       console.error('Failed to clear cart:', error);
       throw error;
     }
-  };
+  }, [token, handleAuthFailure]);
 
   // Calculate derived values
-  const itemCount = cart?.items?.length || 0;
+  const itemCount = cart?.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
   const total = cart?.subtotal || 0;
 
-  const value: CartContextType = {
-    cart,
-    isLoading,
-    itemCount,
-    total,
-    fetchCart,
-    addItem,
-    updateItem,
-    removeItem,
-    clearCart,
-  };
+  const value = useMemo<CartContextType>(
+    () => ({
+      cart,
+      isLoading,
+      itemCount,
+      total,
+      fetchCart,
+      addItem,
+      updateItem,
+      removeItem,
+      clearCart,
+    }),
+    [cart, isLoading, itemCount, total, fetchCart, addItem, updateItem, removeItem, clearCart]
+  );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
