@@ -5,11 +5,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useWallet } from '@/contexts/WalletContext';
 import { orderService } from '@/services/api';
+import { showAlert } from '@/utils/alert';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   ScrollView,
   Text,
@@ -108,15 +108,15 @@ export default function Checkout() {
 
   const validate = () => {
     if (!items.length) {
-      Alert.alert('Empty Cart', 'Add items to your cart before checking out.');
+      showAlert('Empty Cart', 'Add items to your cart before checking out.');
       return false;
     }
     if (!street.trim() || !city.trim() || !state.trim() || !zipCode.trim() || !country.trim()) {
-      Alert.alert('Missing Address', 'Please fill in your complete delivery address.');
+      showAlert('Missing Address', 'Please fill in your complete delivery address.');
       return false;
     }
     if (paymentMethod === 'wallet' && balance < totalPrice) {
-      Alert.alert(
+      showAlert(
         'Insufficient Balance',
         `Your wallet balance is ₹${balance.toFixed(2)}. Add money or choose another payment method.`
       );
@@ -128,7 +128,7 @@ export default function Checkout() {
   const handlePlaceOrder = async () => {
     if (!validate()) return;
     if (!token) {
-      Alert.alert('Session expired', 'Please sign in again.');
+      showAlert('Session expired', 'Please sign in again.');
       router.replace('/(auth)/Signin');
       return;
     }
@@ -178,14 +178,14 @@ export default function Checkout() {
           console.warn('Order placed but the wallet could not be refreshed:', walletError);
         });
 
-        Alert.alert(
+        showAlert(
           'Order Placed',
           'Your order has been placed successfully.',
           [{ text: 'OK', onPress: () => router.replace('/(tabs)/Index') }]
         );
       }
     } catch (error: any) {
-      Alert.alert('Order Failed', error.message || 'Failed to place order. Try again.');
+      showAlert('Order Failed', error.message || 'Failed to place order. Try again.');
     } finally {
       setLoading(false);
     }

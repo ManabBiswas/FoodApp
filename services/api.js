@@ -131,3 +131,14 @@ export const addressService = {
     return apiClient.delete(`/addresses/${addressId}`, token);
   }
 };
+
+// ==================== WALLET SERVICE ====================
+export const walletService = {
+  getWallet: async (token) => {
+    return apiClient.get('/wallet', token);
+  },
+
+  topUp: async (amount, token) => {
+    return apiClient.post('/wallet/topup', { amount }, token);
+  }
+};

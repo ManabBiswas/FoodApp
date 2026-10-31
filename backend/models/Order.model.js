@@ -88,6 +88,10 @@ const orderSchema = new mongoose.Schema({
     default: false
   },
   paidAt: Date,
+  walletRefunded: {
+    type: Boolean,
+    default: false
+  },
   isDelivered: {
     type: Boolean,
     default: false

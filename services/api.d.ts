@@ -44,9 +44,15 @@ export interface AddressServiceType {
   delete: (addressId: string, token: string) => Promise<any>;
 }
 
+export interface WalletServiceType {
+  getWallet: (token: string) => Promise<any>;
+  topUp: (amount: number, token: string) => Promise<any>;
+}
+
 export const authService: AuthServiceType;
 export const foodService: FoodServiceType;
 export const cartService: CartServiceType;
 export const orderService: OrderServiceType;
 export const userService: UserServiceType;
 export const addressService: AddressServiceType;
+export const walletService: WalletServiceType;

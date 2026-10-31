@@ -1,11 +1,11 @@
+import { AddressCardSkeleton } from '@/components/Skeleton';
 import { images } from '@/constants';
-import { useAuth } from '@/contexts/AuthContext';
-import { addressService } from '@/services/api';
+import { Address, useAddress } from '@/contexts/AddressContext';
+import { showAlert } from '@/utils/alert';
 import { router } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   ScrollView,
   Text,
@@ -14,17 +14,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-interface Address {
-  _id: string;
-  label: 'home' | 'work' | 'other';
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-  isDefault?: boolean;
-}
 
 const emptyForm = {
   label: 'home' as Address['label'],
@@ -36,32 +25,18 @@ const emptyForm = {
 };
 
 export default function Addresses() {
-  const { token } = useAuth();
-  const [addresses, setAddresses] = useState<Address[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    addresses,
+    isLoading,
+    error,
+    fetchAddresses,
+    addAddress,
+    deleteAddress,
+    setDefaultAddress,
+  } = useAddress();
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
-
-  const fetchAddresses = useCallback(async () => {
-    if (!token) return;
-
-    try {
-      const response = await addressService.getAll(token);
-      if (response.status === 'success') {
-        setAddresses(response.data || []);
-      }
-    } catch (error: any) {
-      console.error('Failed to fetch addresses:', error);
-      Alert.alert('Error', error.message || 'Failed to load addresses');
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    fetchAddresses();
-  }, [fetchAddresses]);
 
   const validate = () => {
     if (
@@ -71,38 +46,50 @@ export default function Addresses() {
       !form.zipCode.trim() ||
       !form.country.trim()
     ) {
-      Alert.alert('Missing Fields', 'Please fill in the complete address.');
+      showAlert('Missing Fields', 'Please fill in the complete address.');
       return false;
     }
     return true;
   };
 
   const handleAdd = async () => {
-    if (!token || !validate()) return;
+    if (!validate()) return;
 
     try {
       setSaving(true);
-      const response = await addressService.create(form, token);
-      if (response.status === 'success') {
-        setAddresses((current) => [...current, response.data]);
-        setForm(emptyForm);
-        setShowForm(false);
-      }
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to save address');
+      await addAddress({
+        ...form,
+        street: form.street.trim(),
+        city: form.city.trim(),
+        state: form.state.trim(),
+        zipCode: form.zipCode.trim(),
+        country: form.country.trim(),
+      });
+      setForm(emptyForm);
+      setShowForm(false);
+    } catch (requestError: any) {
+      showAlert('Error', requestError.message || 'Failed to save address');
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (addressId: string) => {
-    if (!token) return;
-
     try {
-      await addressService.delete(addressId, token);
-      setAddresses((current) => current.filter((address) => address._id !== addressId));
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to delete address');
+      await deleteAddress(addressId);
+    } catch (requestError: any) {
+      showAlert('Error', requestError.message || 'Failed to delete address');
+    }
+  };
+
+  const handleSetDefault = async (addressId: string) => {
+    try {
+      await setDefaultAddress(addressId);
+    } catch (requestError: any) {
+      showAlert(
+        'Error',
+        requestError.message || 'Failed to update the default address'
+      );
     }
   };
 
@@ -113,10 +100,16 @@ export default function Addresses() {
           {address.label}
         </Text>
         <View className="flex-row items-center gap-3">
-          {address.isDefault && (
+          {address.isDefault ? (
             <View className="bg-green-50 px-2 py-1 rounded-full">
               <Text className="text-green-600 text-xs font-quicksand-semibold">Default</Text>
             </View>
+          ) : (
+            <TouchableOpacity onPress={() => handleSetDefault(address._id)}>
+              <Text className="text-red-500 text-xs font-quicksand-semibold">
+                Set default
+              </Text>
+            </TouchableOpacity>
           )}
           <TouchableOpacity onPress={() => handleDelete(address._id)}>
             <Image source={images.trash} className="size-5" resizeMode="contain" tintColor="#EF4444" />
@@ -227,8 +220,21 @@ export default function Addresses() {
           </View>
         )}
 
-        {loading ? (
-          <ActivityIndicator size="large" color="#EF4444" className="mt-10" />
+        {error && !isLoading && (
+          <View className="bg-red-50 rounded-2xl p-4 mb-4 border border-red-100">
+            <Text className="font-quicksand-semibold text-red-600">{error}</Text>
+            <TouchableOpacity onPress={fetchAddresses} className="mt-2 self-start">
+              <Text className="font-quicksand-bold text-red-500">Retry</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {isLoading ? (
+          <View>
+            {Array.from({ length: 3 }).map((_, index) => (
+              <AddressCardSkeleton key={index} />
+            ))}
+          </View>
         ) : addresses.length === 0 ? (
           <View className="items-center mt-16">
             <Image source={images.location} className="w-20 h-20 mb-4" resizeMode="contain" tintColor="#9CA3AF" />

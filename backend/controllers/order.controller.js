@@ -1,6 +1,7 @@
 import Cart from '../models/Cart.model.js';
 import Food from '../models/Food.model.js';
 import Order from '../models/Order.model.js';
+import User from '../models/User.model.js';
 import handleControllerError from '../utils/controllerError.js';
 import resolveToppings from '../utils/toppings.js';
 import {
@@ -24,6 +25,56 @@ const ORDER_STATUSES = [
   'delivered',
   'cancelled',
 ];
+
+const orderLabel = (orderId) => `#${String(orderId).slice(-6).toUpperCase()}`;
+
+const walletTransactionEntry = ({ type, amount, description, orderId }) => ({
+  type,
+  amount,
+  description,
+  order: orderId,
+  createdAt: new Date(),
+});
+
+/**
+ * Credits a wallet-paid order back to the customer exactly once. The
+ * `walletRefunded` flag is claimed with an atomic update so two concurrent
+ * cancellation requests cannot both issue a refund.
+ */
+const refundWalletPayment = async (order) => {
+  if (order.paymentMethod !== 'wallet' || !order.isPaid) {
+    return null;
+  }
+
+  const claimed = await Order.findOneAndUpdate(
+    { _id: order._id, walletRefunded: { $ne: true } },
+    { $set: { walletRefunded: true } },
+    { returnDocument: 'after' }
+  );
+
+  if (!claimed) {
+    return null;
+  }
+
+  await User.findByIdAndUpdate(claimed.user, {
+    $inc: { walletBalance: claimed.totalPrice },
+    $push: {
+      walletTransactions: {
+        $each: [
+          walletTransactionEntry({
+            type: 'refund',
+            amount: claimed.totalPrice,
+            description: `Refund for cancelled order ${orderLabel(claimed._id)}`,
+            orderId: claimed._id,
+          }),
+        ],
+        $slice: -100,
+      },
+    },
+  });
+
+  return claimed;
+};
 
 const validateDeliveryAddress = (address) => {
   if (!isPlainObject(address)) {
@@ -199,6 +250,17 @@ export const createOrder = async (req, res) => {
     const deliveryFee = DELIVERY_FEE;
     const totalPrice = roundCurrency(itemsPrice + taxPrice + deliveryFee);
 
+    if (paymentMethod === 'wallet') {
+      const walletBalance = Number(req.user.walletBalance) || 0;
+
+      if (walletBalance < totalPrice) {
+        return res.status(400).json({
+          status: 'error',
+          message: `Insufficient wallet balance. Available: ₹${roundCurrency(walletBalance).toFixed(2)}`,
+        });
+      }
+    }
+
     const order = await Order.create({
       user: req.user.id,
       orderItems: orderItemsToCreate,
@@ -221,11 +283,79 @@ export const createOrder = async (req, res) => {
       },
     });
 
-    // Clear user's cart after the order is created successfully
-    await Cart.findOneAndUpdate(
-      { user: req.user.id },
-      { items: [], totalItems: 0, subtotal: 0 }
-    );
+    if (paymentMethod === 'wallet') {
+      // The guard on walletBalance makes the debit atomic, so two orders
+      // cannot spend the same money even if they arrive together.
+      const chargedUser = await User.findOneAndUpdate(
+        { _id: req.user.id, walletBalance: { $gte: totalPrice } },
+        {
+          $inc: { walletBalance: -totalPrice },
+          $push: {
+            walletTransactions: {
+              $each: [
+                walletTransactionEntry({
+                  type: 'debit',
+                  amount: totalPrice,
+                  description: `Payment for order ${orderLabel(order._id)}`,
+                  orderId: order._id,
+                }),
+              ],
+              $slice: -100,
+            },
+          },
+        },
+        { returnDocument: 'after' }
+      );
+
+      if (!chargedUser) {
+        await Order.findByIdAndDelete(order._id);
+        return res.status(400).json({
+          status: 'error',
+          message: 'Insufficient wallet balance',
+        });
+      }
+
+      order.isPaid = true;
+      order.paymentStatus = 'paid';
+      order.paidAt = new Date();
+
+      try {
+        await order.save();
+      } catch (error) {
+        // The debit succeeded but the order did not persist, so return the
+        // money and remove the orphaned order.
+        await User.findByIdAndUpdate(req.user.id, {
+          $inc: { walletBalance: totalPrice },
+          $push: {
+            walletTransactions: {
+              $each: [
+                walletTransactionEntry({
+                  type: 'refund',
+                  amount: totalPrice,
+                  description: `Reversal for failed order ${orderLabel(order._id)}`,
+                  orderId: order._id,
+                }),
+              ],
+              $slice: -100,
+            },
+          },
+        });
+        await Order.findByIdAndDelete(order._id);
+        throw error;
+      }
+    }
+
+    // Clear user's cart after the order is created successfully. A cart
+    // failure must not turn a successful (and possibly wallet-paid) order into
+    // an error response.
+    try {
+      await Cart.findOneAndUpdate(
+        { user: req.user.id },
+        { items: [], totalItems: 0, subtotal: 0 }
+      );
+    } catch (cartError) {
+      console.error('Order created but the cart could not be cleared:', cartError);
+    }
 
     return res.status(201).json({
       status: 'success',
@@ -323,7 +453,9 @@ export const updateOrderStatus = async (req, res) => {
 
     order.orderStatus = orderStatus;
 
-    if (orderStatus === 'delivered') {
+    if (orderStatus === 'cancelled') {
+      order.paymentStatus = order.isPaid ? 'refunded' : order.paymentStatus;
+    } else if (orderStatus === 'delivered') {
       order.isDelivered = true;
       order.deliveredAt = new Date();
     } else if (order.isDelivered) {
@@ -333,6 +465,14 @@ export const updateOrderStatus = async (req, res) => {
     }
 
     await order.save();
+
+    if (orderStatus === 'cancelled') {
+      const refunded = await refundWalletPayment(order);
+
+      if (refunded) {
+        order.walletRefunded = true;
+      }
+    }
 
     return res.status(200).json({
       status: 'success',
@@ -394,18 +534,36 @@ export const cancelOrder = async (req, res) => {
       });
     }
 
-    order.orderStatus = 'cancelled';
-    order.cancelReason = cancelReason?.trim() || undefined;
+    const cancellation = {
+      orderStatus: 'cancelled',
+      ...(cancelReason?.trim() ? { cancelReason: cancelReason.trim() } : {}),
+      ...(order.isPaid ? { paymentStatus: 'refunded' } : {}),
+    };
 
-    if (order.isPaid) {
-      order.paymentStatus = 'refunded';
+    // Claim the cancellation atomically so two requests cannot both cancel and
+    // refund the same order.
+    const cancelledOrder = await Order.findOneAndUpdate(
+      { _id: order._id, orderStatus: { $in: ['pending', 'confirmed'] } },
+      { $set: cancellation },
+      { returnDocument: 'after' }
+    );
+
+    if (!cancelledOrder) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Order is already cancelled or can no longer be cancelled',
+      });
     }
 
-    await order.save();
+    const refunded = await refundWalletPayment(cancelledOrder);
+
+    if (refunded) {
+      cancelledOrder.walletRefunded = true;
+    }
 
     return res.status(200).json({
       status: 'success',
-      data: order,
+      data: cancelledOrder,
     });
   } catch (error) {
     return handleControllerError(res, error);

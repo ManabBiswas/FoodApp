@@ -14,6 +14,7 @@ import cartRoutes from './routes/cart.routes.js';
 import foodRoutes from './routes/food.routes.js';
 import orderRoutes from './routes/order.routes.js';
 import userRoutes from './routes/user.routes.js';
+import walletRoutes from './routes/wallet.routes.js';
 
 // Import middleware
 import errorHandler from './middleware/errorHandler.js';
@@ -145,6 +146,7 @@ app.use('/api/foods', foodRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/addresses', addressRoutes);
+app.use('/api/wallet', walletRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

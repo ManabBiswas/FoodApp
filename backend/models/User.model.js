@@ -1,6 +1,32 @@
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 
+const walletTransactionSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    enum: ['credit', 'debit', 'refund'],
+    required: true
+  },
+  amount: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  description: {
+    type: String,
+    required: true,
+    maxlength: 200
+  },
+  order: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Order'
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -50,6 +76,16 @@ const userSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  walletBalance: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  walletTransactions: {
+    type: [walletTransactionSchema],
+    default: [],
+    select: false
   },
   favoriteItems: [{
     type: mongoose.Schema.Types.ObjectId,
