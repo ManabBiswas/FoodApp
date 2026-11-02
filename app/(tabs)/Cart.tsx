@@ -215,14 +215,14 @@ const Cart = () => {
         >
           <View className="flex-1 items-center justify-center px-4">
             <Image
-              source={images.bag}
-              className="w-24 h-24 mb-4"
+              source={images.emptyState}
+              style={{ width: 240, height: 180 }}
               resizeMode="contain"
             />
-            <Text className="text-2xl font-quicksand-bold text-gray-800 mb-2">
+            <Text className="text-2xl font-quicksand-bold text-gray-800 mt-2 mb-2">
               Your Cart is Empty
             </Text>
-            <Text className="text-center text-gray-600 font-quicksand-regular mb-6">
+            <Text className="text-center text-gray-600 font-quicksand-regular mb-7 px-6">
               Add some delicious items to your cart and get them delivered to you
             </Text>
 
