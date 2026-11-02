@@ -20,7 +20,6 @@ export default function EditProfile() {
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || '');
-  const [avatar, setAvatar] = useState(user?.avatar || '');
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -38,7 +37,7 @@ export default function EditProfile() {
     try {
       setSaving(true);
       const response = await userService.updateProfile(
-        { name: name.trim(), email: email.trim(), phone: phone.trim(), avatar: avatar.trim() },
+        { name: name.trim(), email: email.trim(), phone: phone.trim() },
         token
       );
 
@@ -65,14 +64,6 @@ export default function EditProfile() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16 }}>
-        <View className="items-center mb-6">
-          <Image
-            source={avatar ? { uri: avatar } : images.person}
-            className="w-24 h-24 rounded-3xl"
-            resizeMode="cover"
-          />
-        </View>
-
         <Text className="font-quicksand-semibold text-gray-600 mb-1">Full Name</Text>
         <TextInput
           className="bg-white rounded-xl px-4 py-3 mb-4 font-quicksand-medium text-gray-800 border border-gray-100"
@@ -95,22 +86,12 @@ export default function EditProfile() {
 
         <Text className="font-quicksand-semibold text-gray-600 mb-1">Phone</Text>
         <TextInput
-          className="bg-white rounded-xl px-4 py-3 mb-4 font-quicksand-medium text-gray-800 border border-gray-100"
+          className="bg-white rounded-xl px-4 py-3 mb-6 font-quicksand-medium text-gray-800 border border-gray-100"
           placeholder="Phone number"
           placeholderTextColor="#9CA3AF"
           value={phone}
           onChangeText={setPhone}
           keyboardType="phone-pad"
-        />
-
-        <Text className="font-quicksand-semibold text-gray-600 mb-1">Avatar URL</Text>
-        <TextInput
-          className="bg-white rounded-xl px-4 py-3 mb-6 font-quicksand-medium text-gray-800 border border-gray-100"
-          placeholder="https://..."
-          placeholderTextColor="#9CA3AF"
-          value={avatar}
-          onChangeText={setAvatar}
-          autoCapitalize="none"
         />
 
         <TouchableOpacity

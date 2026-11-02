@@ -332,9 +332,16 @@ export default function Checkout() {
               <Text className="font-quicksand-semibold text-gray-700">
                 No saved addresses yet
               </Text>
-              <Text className="font-quicksand-regular text-gray-500 text-sm mt-1">
-                Add one to auto-fill checkout next time →
-              </Text>
+              <View className="flex-row items-center mt-1">
+                <Text className="font-quicksand-regular text-gray-500 text-sm">
+                  Add one to auto-fill checkout next time
+                </Text>
+                <Image
+                  source={images.arrowRight}
+                  resizeMode="contain"
+                  style={{ width: 20, height: 20, marginLeft: 4, tintColor: '#6B7280' }}
+                />
+              </View>
             </TouchableOpacity>
           )}
 
@@ -429,9 +436,16 @@ export default function Checkout() {
               onPress={() => router.push('/wallet')}
               className="self-start mt-1"
             >
-              <Text className="text-sm font-quicksand-semibold text-red-500">
-                Add money to wallet →
-              </Text>
+              <View className="flex-row items-center">
+                <Text className="text-sm font-quicksand-semibold text-red-500">
+                  Add money to wallet
+                </Text>
+                <Image
+                  source={images.arrowRight}
+                  resizeMode="contain"
+                  style={{ width: 20, height: 20, marginLeft: 4, tintColor: '#EF4444' }}
+                />
+              </View>
             </TouchableOpacity>
           )}
         </View>

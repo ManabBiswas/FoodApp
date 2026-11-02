@@ -1,15 +1,219 @@
-import { images } from '@/constants'
 import { Skeleton } from '@/components/Skeleton'
+import { images } from '@/constants'
+import { useAddress } from '@/contexts/AddressContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { useWallet } from '@/contexts/WalletContext'
+import { showAlert } from '@/utils/alert'
 import { router, useFocusEffect } from 'expo-router'
 import React, { useCallback } from 'react'
-import { Alert, Image, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import {
+  Alert,
+  Image,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native'
+import type { ImageSourcePropType, StyleProp, ViewStyle } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+
+const INK = '#181C2E'
+const MUTED = '#6F6B64'
+const CREAM = '#F7F3EC'
+const ORANGE = '#FE8C00'
+
+type MembershipTier = 'regular' | 'gold' | 'platinum'
+
+const MEMBERSHIP: Record<
+  MembershipTier,
+  { label: string; background: string; color: string }
+> = {
+  regular: { label: 'Regular member', background: '#F1EEE8', color: '#5F5B54' },
+  gold: { label: 'Gold member', background: '#FFF0BE', color: '#8A5A00' },
+  platinum: { label: 'Platinum member', background: '#E6EDF7', color: '#334A6B' },
+}
+
+const MENU_ITEMS = [
+  {
+    title: 'Rate Us',
+    subtitle: 'Tell us how we are doing',
+    icon: images.star,
+    tint: '#A67C00',
+    background: '#FFF3C4',
+  },
+  {
+    title: 'Terms & Conditions',
+    subtitle: 'The fine print',
+    icon: images.check,
+    tint: '#5B6B7A',
+    background: '#EDF1F5',
+  },
+]
+
+const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1)
+
+interface BentoTileProps {
+  title: string
+  subtitle?: string
+  icon: ImageSourcePropType
+  tint: string
+  background: string
+  onPress: () => void
+  style?: StyleProp<ViewStyle>
+  compact?: boolean
+  large?: boolean
+}
+
+function BentoTile({
+  title,
+  subtitle,
+  icon,
+  tint,
+  background,
+  onPress,
+  style,
+  compact = false,
+  large = false,
+}: BentoTileProps) {
+  const iconBoxSize = compact ? 36 : 48
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.85}
+      accessibilityRole="button"
+      accessibilityLabel={subtitle ? `${title}. ${subtitle}` : title}
+      onPress={onPress}
+      className={`justify-between overflow-hidden ${
+        compact ? 'p-3.5 rounded-[24px]' : 'p-5 rounded-[30px]'
+      }`}
+      style={[{ backgroundColor: background }, style]}
+    >
+      <View
+        className="items-center justify-center"
+        style={{
+          width: iconBoxSize,
+          height: iconBoxSize,
+          borderRadius: compact ? 12 : 16,
+          backgroundColor: '#FFFFFFB8',
+        }}
+      >
+        <Image
+          source={icon}
+          resizeMode="contain"
+          style={{ width: compact ? 16 : 20, height: compact ? 16 : 20, tintColor: tint }}
+        />
+      </View>
+
+      {large ? (
+        <Image
+          pointerEvents="none"
+          source={icon}
+          resizeMode="contain"
+          style={{
+            position: 'absolute',
+            right: -18,
+            bottom: 22,
+            width: 112,
+            height: 112,
+            opacity: 0.1,
+            tintColor: tint,
+          }}
+        />
+      ) : null}
+
+      <View>
+        <Text
+          numberOfLines={1}
+          style={{
+            fontFamily: 'Quicksand-Bold',
+            color: INK,
+            fontSize: large ? 22 : compact ? 14 : 16,
+          }}
+        >
+          {title}
+        </Text>
+        {subtitle ? (
+          <Text
+            numberOfLines={1}
+            style={{
+              fontFamily: 'Quicksand-Medium',
+              color: MUTED,
+              fontSize: compact ? 10 : 12,
+              marginTop: 2,
+            }}
+          >
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
+
+      {large ? (
+        <Image
+          source={images.arrowRight}
+          resizeMode="contain"
+          style={{
+            position: 'absolute',
+            top: 16,
+            right: 18,
+            width: 36,
+            height: 36,
+            tintColor: tint,
+          }}
+        />
+      ) : null}
+    </TouchableOpacity>
+  )
+}
+
+function ProfileSkeleton() {
+  return (
+    <SafeAreaView className="flex-1" style={{ backgroundColor: CREAM }}>
+      <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
+        <View className="px-5 pt-3 pb-4 flex-row items-end justify-between">
+          <View>
+            <Skeleton className="h-3 w-20 rounded-full mb-2" />
+            <Skeleton className="h-8 w-32 rounded-full" />
+          </View>
+          <Skeleton className="w-11 h-11 rounded-full" />
+        </View>
+
+        <View className="mx-5 rounded-[30px] px-4 py-4" style={{ backgroundColor: '#E9E5DE' }}>
+          <View className="flex-row items-center">
+            <Skeleton className="w-16 h-16 rounded-[19px]" />
+            <View className="flex-1 ml-3.5">
+              <Skeleton className="h-4 w-32 rounded-full mb-2" />
+              <Skeleton className="h-3 w-44 rounded-full mb-2" />
+              <Skeleton className="h-5 w-24 rounded-full" />
+            </View>
+            <Skeleton className="w-9 h-9 rounded-full" />
+          </View>
+        </View>
+
+        <Skeleton className="mx-5 mt-4 h-40 rounded-[32px]" />
+
+        <View className="mx-5 mt-3 flex-row" style={{ height: 216 }}>
+          <Skeleton className="rounded-[30px]" style={{ flex: 1.12, marginRight: 12 }} />
+          <View style={{ flex: 0.88 }} className="justify-between">
+            <Skeleton className="rounded-[24px]" style={{ flex: 1, marginBottom: 12 }} />
+            <Skeleton className="rounded-[24px]" style={{ flex: 1 }} />
+          </View>
+        </View>
+
+        <View className="px-5 mt-7">
+          <Skeleton className="h-3 w-24 rounded-full mb-3" />
+          <Skeleton className="h-14 w-full rounded-[24px] mb-3" />
+          <Skeleton className="h-14 w-full rounded-[24px]" />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  )
+}
 
 export default function Profile() {
   const { user, logout, refreshUser, isLoading } = useAuth()
-  const { balance } = useWallet()
+  const { balance, transactions } = useWallet()
+  const { addresses, defaultAddress } = useAddress()
 
   useFocusEffect(
     useCallback(() => {
@@ -17,101 +221,19 @@ export default function Profile() {
     }, [refreshUser])
   )
 
-  if (isLoading || !user) {
-    return (
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <View className="bg-primary rounded-b-[40px] pb-8 mb-4">
-          <View className="px-6 pt-4 pb-6">
-            <Text className="text-white text-2xl" style={{ fontFamily: 'Quicksand-Bold' }}>
-              My Profile
-            </Text>
-          </View>
-
-          <View className="mx-6 bg-white rounded-3xl p-5">
-            <View className="flex-row items-center mb-4">
-              <Skeleton className="w-24 h-24 rounded-3xl" />
-              <View className="flex-1 ml-4">
-                <Skeleton className="h-5 w-40 rounded-full mb-2" />
-                <Skeleton className="h-3.5 w-52 rounded-full mb-2" />
-                <Skeleton className="h-6 w-28 rounded-full" />
-              </View>
-            </View>
-            <Skeleton className="h-11 w-full rounded-2xl" />
-          </View>
-        </View>
-
-        <View className="px-6">
-          <View className="flex-row flex-wrap -mx-2">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <View key={index} className="w-1/2 px-2 mb-3">
-                <View className="bg-white rounded-2xl p-4">
-                  <Skeleton className="w-12 h-12 rounded-2xl mb-3" />
-                  <Skeleton className="h-5 w-20 rounded-full" />
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
-      </SafeAreaView>
-    )
-  }
-
-  const quickActions: {
-    id: number
-    icon: any
-    title: string
-    color: string
-    subtitle?: string
-  }[] = [
-    { id: 1, icon: images.bag, title: 'Orders', color: '#FF6B6B' },
-    { id: 2, icon: images.star, title: 'Favorites', color: '#FFD93D' },
-    { id: 3, icon: images.location, title: 'Address', color: '#6BCF7F' },
-    {
-      id: 4,
-      icon: images.rupee,
-      title: 'Wallet',
-      color: '#4ECDC4',
-      subtitle: `₹${balance.toFixed(2)}`,
-    },
-  ]
-
-  const menuSections = [
-    {
-      title: 'Account',
-      items: [
-        { id: 1, icon: images.person, title: 'Edit Profile', color: '#FF6B6B' },
-        { id: 2, icon: images.location, title: 'Delivery Addresses', color: '#6BCF7F' },
-        { id: 3, icon: images.envelope, title: 'Notifications', color: '#FFD93D' },
-      ]
-    },
-    {
-      title: 'More',
-      items: [
-        { id: 4, icon: images.star, title: 'Rate Us', color: '#FFD93D' },
-        { id: 5, icon: images.phone, title: 'Help & Support', color: '#4ECDC4' },
-        { id: 6, icon: images.check, title: 'Terms & Conditions', color: '#95A5A6' },
-      ]
-    }
-  ]
-
   const handleLogout = async () => {
     try {
       let confirmed: boolean
 
       if (Platform.OS === 'web') {
-        // React Native Web's Alert is a no-op, so use the browser dialog.
         const webConfirm = (globalThis as { confirm?: (message: string) => boolean }).confirm
-        confirmed = webConfirm ? webConfirm('Are you sure you want to logout?') : true
+        confirmed = webConfirm ? webConfirm('Are you sure you want to log out?') : true
       } else {
         confirmed = await new Promise<boolean>((resolve) => {
-          Alert.alert(
-            'Logout',
-            'Are you sure you want to logout?',
-            [
-              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
-              { text: 'Logout', style: 'destructive', onPress: () => resolve(true) }
-            ]
-          )
+          Alert.alert('Log out', 'Are you sure you want to log out?', [
+            { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+            { text: 'Log out', style: 'destructive', onPress: () => resolve(true) },
+          ])
         })
       }
 
@@ -120,215 +242,410 @@ export default function Profile() {
       await logout()
       router.replace('/(auth)/Signin')
     } catch (error: any) {
-      Alert.alert('Logout Error', error.message || 'Failed to logout. Please try again.')
+      showAlert('Logout Error', error.message || 'Failed to logout. Please try again.')
     }
   }
 
   const handleMenuItemPress = (title: string) => {
     switch (title) {
-      case 'Edit Profile':
-        router.push('/edit-profile')
-        break
-      case 'Delivery Addresses':
-        router.push('/addresses')
-        break
-      case 'Notifications':
-        Alert.alert('Coming Soon', 'Notification settings will be available soon.')
-        break
       case 'Rate Us':
-        Alert.alert('Coming Soon', 'Rating the app will be available soon.')
-        break
-      case 'Help & Support':
-        Alert.alert('Help & Support', 'Email us at manabbiswas108108@gmail.com')
+        showAlert('Coming Soon', 'Rating the app will be available soon.')
         break
       case 'Terms & Conditions':
-        Alert.alert('Coming Soon', 'Terms and conditions will be available soon.')
+        showAlert('Coming Soon', 'Terms and conditions will be available soon.')
         break
       default:
-        Alert.alert('Coming Soon', `${title} will be available soon!`)
+        showAlert('Coming Soon', `${title} will be available soon!`)
     }
   }
 
-  const handleQuickAction = (title: string) => {
-    switch (title) {
-      case 'Orders':
-        router.push('/orders')
-        break
-      case 'Favorites':
-        router.push('/favorites')
-        break
-      case 'Address':
-        router.push('/addresses')
-        break
-      case 'Wallet':
-        router.push('/wallet')
-        break
-      default:
-        Alert.alert('Coming Soon', `${title} will be available soon!`)
-    }
+  if (isLoading || !user) {
+    return <ProfileSkeleton />
   }
 
-  const handleEditProfile = () => {
-    router.push('/edit-profile')
-  }
+  const membership = MEMBERSHIP[user.membershipType] ?? MEMBERSHIP.regular
+  const initials =
+    user.name
+      .trim()
+      .split(/\s+/)
+      .map((part) => part.charAt(0))
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || 'U'
+  const addressSubtitle = defaultAddress
+    ? `${capitalize(defaultAddress.label)} · ${defaultAddress.city}`
+    : addresses.length > 0
+      ? `${addresses.length} saved`
+      : 'Add your first'
+  const transactionCount = transactions.length
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
-        {/* Header with Background */}
-        <View className="bg-primary rounded-b-[40px] pb-8 mb-4">
-          {/* Top Header */}
-          <View className="px-6 pt-4 pb-6">
-            <Text className="text-white text-2xl" style={{ fontFamily: 'Quicksand-Bold' }}>
-              My Profile
-            </Text>
-          </View>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: CREAM }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 32 }}
+      >
+        {/* Header */}
+        <View className="px-5 pt-3 pb-4">
+          <Text
+            className="text-[11px] tracking-[2px]"
+            style={{ fontFamily: 'Quicksand-Bold', color: '#9A958C' }}
+          >
+            MY ACCOUNT
+          </Text>
+          <Text
+            className="text-3xl mt-1"
+            style={{ fontFamily: 'Quicksand-Bold', color: INK }}
+          >
+            Profile
+          </Text>
+        </View>
 
-          {/* Profile Card */}
-          <View className="mx-6 bg-white rounded-3xl p-5 shadow-lg">
-            <View className="flex-row items-center mb-4">
-              <View className="relative">
-                <Image
-                  source={user.avatar ? { uri: user.avatar } : images.person}
-                  className="w-24 h-24 rounded-3xl"
-                  resizeMode="cover"
-                />
-                <View className="absolute -bottom-2 -right-2 bg-green-500 w-8 h-8 rounded-full border-4 border-white items-center justify-center">
-                  <View className="w-3 h-3 bg-white rounded-full" />
-                </View>
-              </View>
+        {/* Profile tile */}
+        <View
+          className="mx-5 rounded-[30px] px-4 py-4 overflow-hidden"
+          style={{ backgroundColor: INK }}
+        >
+          <View
+            className="absolute rounded-full"
+            style={{
+              width: 120,
+              height: 120,
+              top: -60,
+              right: -30,
+              backgroundColor: ORANGE,
+              opacity: 0.18,
+            }}
+          />
+          <View
+            className="absolute rounded-full"
+            style={{
+              width: 90,
+              height: 90,
+              bottom: -50,
+              left: -20,
+              backgroundColor: ORANGE,
+              opacity: 0.12,
+            }}
+          />
 
-              <View className="flex-1 ml-4">
-                <Text className="text-xl text-gray-900 mb-1" style={{ fontFamily: 'Quicksand-Bold' }}>
-                  {user.name}
+          <View className="flex-row items-center">
+            <View
+              className="items-center justify-center rounded-[22px]"
+              style={{
+                width: 69,
+                height: 69,
+                backgroundColor: ORANGE,
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: 'Quicksand-Bold',
+                  fontSize: 24,
+                  color: '#FFFFFF',
+                }}
+              >
+                {initials}
+              </Text>
+            </View>
+
+            <View className="flex-1 ml-3.5">
+              <Text
+                numberOfLines={1}
+                className="text-xl text-white"
+                style={{ fontFamily: 'Quicksand-Bold' }}
+              >
+                {user.name}
+              </Text>
+              <Text
+                numberOfLines={1}
+                className="text-[11px] mt-0.5"
+                style={{ fontFamily: 'Quicksand-Medium', color: '#B8B5C0' }}
+              >
+                {user.email}
+              </Text>
+              <View
+                className="self-start mt-1.5 px-2.5 py-0.5 rounded-full"
+                style={{ backgroundColor: membership.background }}
+              >
+                <Text
+                  className="text-[10px]"
+                  style={{ fontFamily: 'Quicksand-Bold', color: membership.color }}
+                >
+                  {membership.label}
                 </Text>
-                <Text className="text-sm text-gray-600 mb-1" style={{ fontFamily: 'Quicksand-Medium' }}>
-                  {user.email}
-                </Text>
-                <View className="flex-row items-center mt-1">
-                  <View className="bg-red-50 px-3 py-1 rounded-full">
-                    <Text className="text-xs text-red-500" style={{ fontFamily: 'Quicksand-SemiBold' }}>
-                      🎉 Gold Member
-                    </Text>
-                  </View>
-                </View>
               </View>
             </View>
 
-            {/* Edit Button */}
-            <TouchableOpacity 
-              className="bg-primary rounded-2xl py-3 flex-row items-center justify-center"
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Edit profile"
               activeOpacity={0.8}
-              onPress={handleEditProfile}
+              onPress={() => router.push('/edit-profile')}
+              className="flex-row items-center rounded-full px-3 py-2"
+              style={{ backgroundColor: '#FFFFFF1F' }}
             >
-              <Image source={images.pencil} className="w-5 h-5 mr-2" tintColor="#FFFFFF" />
-              <Text className="text-white text-base" style={{ fontFamily: 'Quicksand-Bold' }}>
-                Edit Profile
+              <Image
+                source={images.pencil}
+                resizeMode="contain"
+                style={{ width: 13, height: 13, tintColor: '#FFFFFF' }}
+              />
+              <Text
+                className="text-[11px] ml-1.5"
+                style={{ fontFamily: 'Quicksand-Bold', color: '#FFFFFF' }}
+              >
+                Edit
               </Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Quick Actions */}
-        <View className="px-6 mb-6">
-          <View className="flex-row flex-wrap -mx-2">
-            {quickActions.map((action) => (
-              <TouchableOpacity
-                key={action.id}
-                className="w-1/2 px-2 mb-3"
-                activeOpacity={0.7}
-                onPress={() => handleQuickAction(action.title)}
+        {/* Wallet banner */}
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={`Wallet balance ₹${balance.toFixed(2)}. Open wallet`}
+          activeOpacity={0.9}
+          onPress={() => router.push('/wallet')}
+          className="mx-5 mt-4 rounded-[32px] p-5 overflow-hidden"
+          style={{ backgroundColor: ORANGE }}
+        >
+          <View
+            className="absolute rounded-full"
+            style={{
+              width: 160,
+              height: 160,
+              top: -90,
+              right: -50,
+              backgroundColor: '#FFFFFF',
+              opacity: 0.16,
+            }}
+          />
+          <View
+            className="absolute rounded-full"
+            style={{
+              width: 100,
+              height: 100,
+              bottom: -60,
+              right: 40,
+              backgroundColor: '#D96B00',
+              opacity: 0.35,
+            }}
+          />
+
+          <View className="flex-row items-start justify-between">
+            <View>
+              <Text
+                className="text-[11px] tracking-[1.5px]"
+                style={{ fontFamily: 'Quicksand-Bold', color: '#FFF3E2' }}
               >
-                <View className="bg-white rounded-2xl p-4 shadow-sm">
-                  <View 
-                    className="w-12 h-12 rounded-2xl items-center justify-center mb-3"
-                    style={{ backgroundColor: action.color + '15' }}
-                  >
-                    <Image
-                      source={action.icon}
-                      className="w-6 h-6"
-                      resizeMode="contain"
-                      style={{ tintColor: action.color }}
-                    />
-                  </View>
-                  <Text className="text-2xl text-gray-900 mb-1" style={{ fontFamily: 'Quicksand-Bold' }}>
-                    {action.title}
-                  </Text>
-                  {action.subtitle ? (
-                    <Text className="text-sm text-gray-500" style={{ fontFamily: 'Quicksand-Medium' }}>
-                      {action.subtitle}
-                    </Text>
-                  ) : null}
-                </View>
-              </TouchableOpacity>
-            ))}
+                WALLET BALANCE
+              </Text>
+              <Text
+                className="text-4xl mt-1 text-white"
+                style={{ fontFamily: 'Quicksand-Bold' }}
+              >
+                ₹{balance.toFixed(2)}
+              </Text>
+            </View>
+
+            <View
+              className="w-11 h-11 rounded-2xl items-center justify-center"
+              style={{ backgroundColor: '#FFFFFF2E' }}
+            >
+              <Image
+                source={images.rupee}
+                resizeMode="contain"
+                style={{ width: 20, height: 20, tintColor: '#FFFFFF' }}
+              />
+            </View>
+          </View>
+
+          <View className="flex-row items-center justify-between mt-5">
+            <View className="flex-row items-center rounded-full px-4 py-2 bg-white">
+              <Image
+                source={images.plus}
+                resizeMode="contain"
+                style={{ width: 14, height: 14, marginRight: 6, tintColor: ORANGE }}
+              />
+              <Text
+                className="text-sm"
+                style={{ fontFamily: 'Quicksand-Bold', color: ORANGE }}
+              >
+                Add money
+              </Text>
+            </View>
+
+            <Text
+              className="text-[11px]"
+              style={{ fontFamily: 'Quicksand-Medium', color: '#FFF3E2' }}
+            >
+              {transactionCount === 0
+                ? 'No transactions yet'
+                : `${transactionCount} recent transaction${transactionCount === 1 ? '' : 's'}`}
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* Bento grid */}
+        <View className="flex-row mx-5 mt-3" style={{ height: 216 }}>
+          <BentoTile
+            title="Orders"
+            subtitle="Track deliveries"
+            icon={images.bag}
+            tint="#C2551F"
+            background="#FFE6D5"
+            onPress={() => router.push('/orders')}
+            large
+            style={{ flex: 1.12, marginRight: 12 }}
+          />
+
+          <View style={{ flex: 0.88 }} className="justify-between">
+            <BentoTile
+              title="Favorites"
+              subtitle="Saved dishes"
+              icon={images.star}
+              tint="#A67C00"
+              background="#FFF3C4"
+              onPress={() => router.push('/favorites')}
+              compact
+              style={{ flex: 1, marginBottom: 12 }}
+            />
+            <BentoTile
+              title="Addresses"
+              subtitle={addressSubtitle}
+              icon={images.location}
+              tint="#2F7D53"
+              background="#DFF3E7"
+              onPress={() => router.push('/addresses')}
+              compact
+              style={{ flex: 1 }}
+            />
           </View>
         </View>
 
-        {/* Menu Sections */}
-        {menuSections.map((section, sectionIndex) => (
-          <View key={sectionIndex} className="px-6 mb-6">
-            <Text className="text-lg text-gray-900 mb-3" style={{ fontFamily: 'Quicksand-Bold' }}>
-              {section.title}
-            </Text>
-            <View className="bg-white rounded-2xl overflow-hidden shadow-sm">
-              {section.items.map((item, index) => (
-                <TouchableOpacity
-                  key={item.id}
-                  className={`flex-row items-center px-4 py-4 ${
-                    index !== section.items.length - 1 ? 'border-b-2 border-gray-50' : ''
-                  }`}
-                  activeOpacity={0.7}
-                  onPress={() => handleMenuItemPress(item.title)}
+        {/* Account section */}
+        <View className="px-5 mt-7 mb-3">
+          <Text
+            className="text-lg"
+            style={{ fontFamily: 'Quicksand-Bold', color: INK }}
+          >
+            Account
+          </Text>
+        </View>
+
+        <View className="mx-5 flex-row" style={{ height: 118 }}>
+          <BentoTile
+            title="Notifications"
+            subtitle="Updates & offers"
+            icon={images.envelope}
+            tint="#B77900"
+            background="#FFF3D6"
+            onPress={() =>
+              showAlert('Coming Soon', 'Notification settings will be available soon.')
+            }
+            compact
+            style={{ flex: 1, marginRight: 12 }}
+          />
+          <BentoTile
+            title="Support"
+            subtitle="We are here to help"
+            icon={images.phone}
+            tint="#2E6B9E"
+            background="#E2EFFB"
+            onPress={() =>
+              showAlert('Help & Support', 'Email us at manabbiswas108108@gmail.com')
+            }
+            compact
+            style={{ flex: 1 }}
+          />
+        </View>
+
+        {/* Preferences */}
+        <View className="px-5 mt-7 mb-3">
+          <Text
+            className="text-lg"
+            style={{ fontFamily: 'Quicksand-Bold', color: INK }}
+          >
+            Preferences
+          </Text>
+        </View>
+
+        <View className="mx-5 bg-white rounded-[28px] overflow-hidden shadow-sm">
+          {MENU_ITEMS.map((item, index) => (
+            <TouchableOpacity
+              key={item.title}
+              accessibilityRole="button"
+              accessibilityLabel={item.title}
+              activeOpacity={0.7}
+              onPress={() => handleMenuItemPress(item.title)}
+              className={`flex-row items-center px-4 py-4 ${
+                index !== MENU_ITEMS.length - 1 ? 'border-b border-[#F0ECE5]' : ''
+              }`}
+            >
+              <View
+                className="w-10 h-10 rounded-xl items-center justify-center"
+                style={{ backgroundColor: item.background }}
+              >
+                <Image
+                  source={item.icon}
+                  resizeMode="contain"
+                  style={{ width: 20, height: 20, tintColor: item.tint }}
+                />
+              </View>
+
+              <View className="flex-1 ml-3">
+                <Text
+                  className="text-sm"
+                  style={{ fontFamily: 'Quicksand-SemiBold', color: INK }}
                 >
-                  <View 
-                    className="w-11 h-11 rounded-xl items-center justify-center"
-                    style={{ backgroundColor: item.color + '15' }}
-                  >
-                    <Image
-                      source={item.icon}
-                      className="w-5 h-5"
-                      resizeMode="contain"
-                      style={{ tintColor: item.color }}
-                    />
-                  </View>
+                  {item.title}
+                </Text>
+                <Text
+                  className="text-[11px] mt-0.5"
+                  style={{ fontFamily: 'Quicksand-Medium', color: '#9A958C' }}
+                >
+                  {item.subtitle}
+                </Text>
+              </View>
 
-                  <Text className="flex-1 ml-4 text-base text-gray-900" style={{ fontFamily: 'Quicksand-SemiBold' }}>
-                    {item.title}
-                  </Text>
+              <Image
+                source={images.arrowRight}
+                resizeMode="contain"
+                style={{ width: 32, height: 32, tintColor: '#B7B2A9' }}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
 
-                  <Image
-                    source={images.arrowRight}
-                    className="w-10 h-10"
-                    resizeMode="contain"
-                    tintColor="#000F00"
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        ))}
-
-        {/* Logout Button */}
-        <View className="px-6 pb-8">
+        {/* Logout */}
+        <View className="px-5 mt-5">
           <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Log out"
             onPress={handleLogout}
-            className="bg-white rounded-2xl py-4 flex-row items-center justify-center border-2 border-red-500"
-            activeOpacity={0.8}
+            activeOpacity={0.85}
+            className="bg-white rounded-2xl py-4 flex-row items-center justify-center border border-[#F3D4CE]"
           >
             <Image
               source={images.logout}
-              className="w-6 h-6 mr-2"
               resizeMode="contain"
-              tintColor="#EF4444"
+              style={{ width: 20, height: 20, marginRight: 8, tintColor: '#D9534F' }}
             />
-            <Text className="text-red-500 text-lg" style={{ fontFamily: 'Quicksand-Bold' }}>
-              Logout
+            <Text
+              className="text-base"
+              style={{ fontFamily: 'Quicksand-Bold', color: '#D9534F' }}
+            >
+              Log out
             </Text>
           </TouchableOpacity>
-          
-          <Text className="text-center text-gray-400 text-sm mt-4" style={{ fontFamily: 'Quicksand-Regular' }}>
-            Version 1.0.0
+
+          <Text
+            className="text-center text-[11px] mt-4"
+            style={{ fontFamily: 'Quicksand-Regular', color: '#A9A49B' }}
+          >
+            FoodApp · Version 1.0.0
           </Text>
         </View>
       </ScrollView>
