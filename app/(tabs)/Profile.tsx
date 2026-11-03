@@ -3,6 +3,7 @@ import { images } from '@/constants'
 import { useAddress } from '@/contexts/AddressContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { useWallet } from '@/contexts/WalletContext'
+import { formatAddressLabel } from '@/utils/address'
 import { showAlert } from '@/utils/alert'
 import { router, useFocusEffect } from 'expo-router'
 import React, { useCallback } from 'react'
@@ -50,8 +51,6 @@ const MENU_ITEMS = [
     background: '#EDF1F5',
   },
 ]
-
-const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1)
 
 interface BentoTileProps {
   title: string
@@ -274,7 +273,7 @@ export default function Profile() {
       .join('')
       .toUpperCase() || 'U'
   const addressSubtitle = defaultAddress
-    ? `${capitalize(defaultAddress.label)} · ${defaultAddress.city}`
+    ? `${formatAddressLabel(defaultAddress.label)} · ${defaultAddress.city}`
     : addresses.length > 0
       ? `${addresses.length} saved`
       : 'Add your first'

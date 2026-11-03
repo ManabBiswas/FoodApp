@@ -13,7 +13,7 @@ import { useAuth } from './AuthContext';
 
 export interface Address {
   _id: string;
-  label: 'home' | 'work' | 'other';
+  label: 'home' | 'work' | 'other' | 'current';
   street: string;
   city: string;
   state: string;

@@ -5,7 +5,9 @@ import { useAddress } from "@/contexts/AddressContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { foodService } from "@/services/api";
+import { formatAddressLabel } from "@/utils/address";
 import { showAlert } from "@/utils/alert";
+import { resolveCurrentAddress } from "@/utils/currentLocation";
 import { router } from "expo-router";
 import { Fragment, useEffect, useState } from "react";
 import {
@@ -22,8 +24,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
-
 export default function Index() {
   const { user } = useAuth();
   const { addItem } = useCart();
@@ -31,12 +31,14 @@ export default function Index() {
     addresses,
     defaultAddress,
     isLoading: addressesLoading,
+    addAddress,
     setDefaultAddress,
   } = useAddress();
   const [foods, setFoods] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [locationOpen, setLocationOpen] = useState(false);
   const [selectingAddressId, setSelectingAddressId] = useState<string | null>(null);
+  const [locating, setLocating] = useState(false);
 
   const fetchFoods = async () => {
     try {
@@ -68,17 +70,21 @@ export default function Index() {
     }
   }
 
-  const handleFoodPress = async (food: any) => {
+  const handleFoodPress = (food: any) => {
+    router.push({ pathname: '/food/[id]', params: { id: food._id } });
+  }
+
+  const handleAddToCart = async (food: any) => {
     try {
       await addItem(food._id, 1);
-      Alert.alert('Added to Cart', `${food.name} has been added to your cart.`);
+      showAlert('Added to Cart', `${food.name} has been added to your cart.`);
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to add item to cart');
+      showAlert('Error', error.message || 'Failed to add item to cart');
     }
   }
 
   const locationLabel = defaultAddress
-    ? `${capitalize(defaultAddress.label)} · ${defaultAddress.city}`
+    ? `${formatAddressLabel(defaultAddress.label)} · ${defaultAddress.city}`
     : 'Set delivery address'
 
   const handleSelectAddress = async (addressId: string) => {
@@ -95,6 +101,58 @@ export default function Index() {
       showAlert('Address Error', error.message || 'Failed to set delivery address')
     } finally {
       setSelectingAddressId(null)
+    }
+  }
+
+  const handleUseCurrentLocation = async () => {
+    if (locating) return
+
+    try {
+      setLocating(true)
+      const current = await resolveCurrentAddress()
+
+      const normalize = (value: string) => value.trim().toLowerCase()
+      const nearby = addresses.find((address) => {
+        const latitude = address.coordinates?.latitude
+        const longitude = address.coordinates?.longitude
+        const closeByCoordinates =
+          typeof latitude === 'number' &&
+          typeof longitude === 'number' &&
+          Math.abs(latitude - current.latitude) < 0.001 &&
+          Math.abs(longitude - current.longitude) < 0.001
+        const sameAddress =
+          normalize(address.street) === normalize(current.street) &&
+          normalize(address.city) === normalize(current.city)
+
+        return closeByCoordinates || sameAddress
+      })
+
+      if (nearby) {
+        await setDefaultAddress(nearby._id)
+      } else {
+        await addAddress({
+          label: 'current',
+          street: current.street,
+          city: current.city,
+          state: current.state,
+          zipCode: current.zipCode,
+          country: current.country,
+          coordinates: {
+            latitude: current.latitude,
+            longitude: current.longitude,
+          },
+          isDefault: true,
+        })
+      }
+
+      setLocationOpen(false)
+    } catch (error: any) {
+      showAlert(
+        'Location Error',
+        error.message || 'Failed to use your current location'
+      )
+    } finally {
+      setLocating(false)
     }
   }
 
@@ -230,7 +288,7 @@ export default function Index() {
                     <TouchableOpacity
                       onPress={(e) => {
                         e.stopPropagation();
-                        addItem(food._id, 1);
+                        handleAddToCart(food);
                       }}
                       className="bg-red-500 rounded-full px-3 py-1"
                       activeOpacity={0.8}
@@ -287,6 +345,46 @@ export default function Index() {
               </TouchableOpacity>
             </View>
 
+            <TouchableOpacity
+              onPress={handleUseCurrentLocation}
+              disabled={locating || selectingAddressId !== null}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Use current location"
+              className="flex-row items-center rounded-2xl px-3 py-3 mb-3 border border-[#FE8C0033] bg-orange-50"
+            >
+              <View className="w-9 h-9 rounded-xl items-center justify-center bg-primary">
+                {locating ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Image
+                    source={images.location}
+                    style={{ width: 16, height: 16, tintColor: '#FFFFFF' }}
+                    resizeMode="contain"
+                  />
+                )}
+              </View>
+
+              <View className="flex-1 ml-3">
+                <Text className="font-quicksand-bold text-gray-800">
+                  {locating ? 'Finding your address…' : 'Use current location'}
+                </Text>
+                <Text className="text-xs font-quicksand-regular text-gray-500 mt-0.5">
+                  {locating
+                    ? 'This may take a moment'
+                    : 'Detect where you are right now'}
+                </Text>
+              </View>
+
+              {!locating && (
+                <Image
+                  source={images.arrowRight}
+                  style={{ width: 28, height: 28, tintColor: '#FE8C00' }}
+                  resizeMode="contain"
+                />
+              )}
+            </TouchableOpacity>
+
             {addresses.length === 0 ? (
               <View className="items-center py-6">
                 <Image
@@ -317,7 +415,7 @@ export default function Index() {
                       disabled={selectingAddressId !== null}
                       activeOpacity={0.8}
                       accessibilityRole="button"
-                      accessibilityLabel={`Deliver to ${address.label}, ${address.street}, ${address.city}`}
+                      accessibilityLabel={`Deliver to ${formatAddressLabel(address.label)}, ${address.street}, ${address.city}`}
                       className={`flex-row items-center rounded-2xl px-3 py-3 mb-2 border ${
                         isSelected
                           ? 'bg-orange-50 border-primary'
@@ -341,8 +439,8 @@ export default function Index() {
                       </View>
 
                       <View className="flex-1 ml-3">
-                        <Text className="font-quicksand-bold text-gray-800 capitalize">
-                          {address.label}
+                        <Text className="font-quicksand-bold text-gray-800">
+                          {formatAddressLabel(address.label)}
                         </Text>
                         <Text
                           className="text-xs font-quicksand-regular text-gray-500 mt-0.5"

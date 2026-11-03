@@ -1,6 +1,7 @@
 import { AddressCardSkeleton } from '@/components/Skeleton';
 import { images } from '@/constants';
 import { Address, useAddress } from '@/contexts/AddressContext';
+import { formatAddressLabel } from '@/utils/address';
 import { showAlert } from '@/utils/alert';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
@@ -96,8 +97,8 @@ export default function Addresses() {
   const renderAddress = (address: Address) => (
     <View key={address._id} className="bg-white rounded-2xl p-4 mb-3 border border-gray-100">
       <View className="flex-row justify-between items-center mb-2">
-        <Text className="font-quicksand-bold text-gray-800 capitalize">
-          {address.label}
+        <Text className="font-quicksand-bold text-gray-800">
+          {formatAddressLabel(address.label)}
         </Text>
         <View className="flex-row items-center gap-3">
           {address.isDefault ? (

@@ -70,7 +70,13 @@ export default function Favorites() {
   };
 
   const renderFood = ({ item }: { item: FoodItem }) => (
-    <View className="w-[48%] bg-white rounded-2xl p-3 mb-4 border border-gray-100">
+    <TouchableOpacity
+      className="w-[48%] bg-white rounded-2xl p-3 mb-4 border border-gray-100"
+      onPress={() =>
+        router.push({ pathname: '/food/[id]', params: { id: item._id } })
+      }
+      activeOpacity={0.8}
+    >
       <View className="bg-gray-50 rounded-xl p-3 mb-2">
         <Image
           source={item.image ? { uri: item.image } : images.person}
@@ -89,19 +95,25 @@ export default function Favorites() {
       </Text>
       <View className="flex-row justify-between mt-2">
         <TouchableOpacity
-          onPress={() => handleRemove(item._id)}
+          onPress={(event) => {
+            event.stopPropagation();
+            handleRemove(item._id);
+          }}
           className="px-2 py-1 rounded-full bg-gray-100"
         >
           <Text className="text-gray-500 text-xs font-quicksand-semibold">Remove</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => handleAdd(item._id)}
+          onPress={(event) => {
+            event.stopPropagation();
+            handleAdd(item._id);
+          }}
           className="px-3 py-1 rounded-full bg-red-500"
         >
           <Text className="text-white text-xs font-quicksand-semibold">Add</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (

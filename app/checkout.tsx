@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useWallet } from '@/contexts/WalletContext';
 import { orderService } from '@/services/api';
+import { formatAddressLabel } from '@/utils/address';
 import { showAlert } from '@/utils/alert';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -276,8 +277,8 @@ export default function Checkout() {
                   >
                     <View className="flex-row items-center justify-between mb-1">
                       <View className="flex-row items-center">
-                        <Text className="font-quicksand-bold text-gray-800 capitalize">
-                          {address.label}
+                        <Text className="font-quicksand-bold text-gray-800">
+                          {formatAddressLabel(address.label)}
                         </Text>
                         {address.isDefault && (
                           <View className="ml-2 bg-green-50 px-2 py-0.5 rounded-full">

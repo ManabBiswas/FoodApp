@@ -4,6 +4,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './AuthContext';
 
+export interface CartTopping {
+  name: string;
+  price?: number;
+}
+
 export interface CartItem {
   _id: string;
   food: {
@@ -32,7 +37,11 @@ interface CartContextType {
 
   // Cart Methods
   fetchCart: () => Promise<void>; // Fetches cart data as promises and updates state
-  addItem: (foodId: string, quantity: number) => Promise<void>;
+  addItem: (
+    foodId: string,
+    quantity: number,
+    selectedToppings?: CartTopping[]
+  ) => Promise<void>;
   updateItem: (itemId: string, quantity: number) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -87,13 +96,19 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     fetchCart();
   }, [token, fetchCart]);
 
-  const addItem = useCallback(async (foodId: string, quantity: number) => {
+  const addItem = useCallback(async (
+    foodId: string,
+    quantity: number,
+    selectedToppings?: CartTopping[]
+  ) => {
     if (!token) throw new Error('Please sign in to add items to your cart.');
 
     try {
       setIsLoading(true);
       const response = await cartService.addItem(
-        { foodId, quantity },
+        selectedToppings && selectedToppings.length > 0
+          ? { foodId, quantity, selectedToppings }
+          : { foodId, quantity },
         token
       );
       const cartData = response.data || response;

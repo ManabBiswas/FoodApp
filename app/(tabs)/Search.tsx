@@ -2,6 +2,7 @@ import { images } from '@/constants'
 import { FoodGridSkeleton } from '@/components/Skeleton'
 import { foodService } from '@/services/api'
 import { useCart } from '@/contexts/CartContext'
+import { router } from 'expo-router'
 import React, { useEffect, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
@@ -101,14 +102,7 @@ export default function Search() {
   }
 
   const handleFoodPress = (food: any) => {
-    Alert.alert(
-      food.name,
-      `${food.description || 'No description'}\n\nPrice: ₹${food.price?.toFixed(2)}`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Add to Cart', onPress: () => handleAddToCart(food) }
-      ]
-    )
+    router.push({ pathname: '/food/[id]', params: { id: food._id } })
   }
 
   const handleAddToCart = async (food: any) => {
@@ -131,10 +125,10 @@ export default function Search() {
           className="w-full h-28"
           resizeMode="contain"
         />
-        {item.isVeg !== undefined && (
-          <View className={`absolute top-2 right-2 ${item.isVeg ? 'bg-green-500' : 'bg-red-500'} rounded-full px-2 py-1`}>
+        {item.isVegetarian !== undefined && (
+          <View className={`absolute top-2 right-2 ${item.isVegetarian ? 'bg-green-500' : 'bg-red-500'} rounded-full px-2 py-1`}>
             <Text className="text-white text-xs font-quicksand-bold">
-              {item.isVeg ? '🌱 Veg' : '🍖 Non-Veg'}
+              {item.isVegetarian ? '🌱 Veg' : '🍖 Non-Veg'}
             </Text>
           </View>
         )}
@@ -168,7 +162,10 @@ export default function Search() {
         </Text>
         <TouchableOpacity
           className="bg-red-500 rounded-full px-4 py-2"
-          onPress={() => handleAddToCart(item)}
+          onPress={(event) => {
+            event.stopPropagation();
+            handleAddToCart(item);
+          }}
         >
           <Text className="text-white font-quicksand-semibold text-xs">
             Add +

@@ -85,7 +85,18 @@ const Cart = () => {
       <View className="border-b border-gray-200 px-4 py-4">
         <View className="flex-row gap-3">
           {/* Food Image */}
-          <View className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden">
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: '/food/[id]',
+                params: { id: item.food?._id },
+              })
+            }
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={`View ${item.food?.name || 'item'} details`}
+            className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden"
+          >
             <Image
               source={
                 item.food?.image
@@ -95,13 +106,23 @@ const Cart = () => {
               className="w-full h-full"
               resizeMode="cover"
             />
-          </View>
+          </TouchableOpacity>
 
           {/* Food Details */}
           <View className="flex-1">
-            <Text className="text-base font-quicksand-bold text-gray-800 mb-1">
-              {item.food?.name || 'Unknown Item'}
-            </Text>
+            <TouchableOpacity
+              onPress={() =>
+                router.push({
+                  pathname: '/food/[id]',
+                  params: { id: item.food?._id },
+                })
+              }
+              activeOpacity={0.7}
+            >
+              <Text className="text-base font-quicksand-bold text-gray-800 mb-1">
+                {item.food?.name || 'Unknown Item'}
+              </Text>
+            </TouchableOpacity>
 
             {/* Price per item */}
             <Text className="text-sm font-quicksand-medium text-gray-600 mb-2">

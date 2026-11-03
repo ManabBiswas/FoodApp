@@ -23,7 +23,7 @@ const ADDRESS_FIELDS = [
   'isDefault',
 ];
 
-const LABELS = ['home', 'work', 'other'];
+const LABELS = ['home', 'work', 'other', 'current'];
 
 const validateAddressPayload = (payload, { partial = false } = {}) => {
   const has = (field) => payload[field] !== undefined;
